@@ -1,0 +1,69 @@
+import Twitch from "./twitch.js";
+
+export default class TwitchQueue {
+  private queue: {
+    id: string;
+    username: string;
+    displayName: string;
+    type?: "inQueue" | "missed" | "done"
+  }[] = [];
+  private client: Twitch = null;
+  
+  constructor(twitchClient: Twitch, template: {
+    for: string; // play with DrVem, get an AI profile picture
+    how: "channel_points" | "chat";
+    call_user: string;
+    call_failed: string;
+    how_to_join_queue: string
+    missedInfo: string;
+  }) {
+    this.client = twitchClient;
+  }
+
+  public add(user: {
+    id: string;
+    username: string;
+    displayName: string;
+    type?: "inQueue" | "missed" | "done"  
+  }): void {
+    this.queue.push({type: "inQueue", ...user});
+  }
+
+  public getNext(): {
+    id: string;
+    username: string;
+    displayName: string;
+    type?: "inQueue" | "missed" | "done";
+  } {
+    const user = this.queue.filter(user => user.type == "inQueue").shift();
+    user.type = "done";x 
+    return user;
+  }
+
+  public get length(): number {
+    return this.queue.length;
+  }
+
+  public getQueuePosition(user: {
+    id: string;
+    username: string;
+    displayName: string;
+  }): number {
+    return this.queue.filter(user => user.type == "inQueue").findIndex((u) => u.id === user.id) + 1;
+  }
+
+  public ordnialSuffixOf(i: number): string {
+    const j = i % 10;
+    const k = i % 100;
+    if (j === 1 && k !== 11) {
+      return i + "st";
+    }
+    if (j === 2 && k !== 12) {
+      return i + "nd";
+    }
+    if (j === 3 && k !== 13) {
+      return i + "rd";
+    }
+    return i + "th";
+  }
+}

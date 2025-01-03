@@ -1,0 +1,8 @@
+[
+    {
+        "on": "follow",
+        "do": "message",
+        "as": "sender",
+        "message": "Thanks for following, {{name}}! We are now at {{followers}} followers!"
+    }
+]
