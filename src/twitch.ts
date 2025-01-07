@@ -73,6 +73,8 @@ export default class Twitch {
         condition: any;
     }[] = [];
 
+    private ready = false;
+
     public logger(text: unknown, lvl: any) {
 
         let formatter = chalk.white.bold;
@@ -224,6 +226,8 @@ export default class Twitch {
                         this.logger("Connecting to Twitch...", "warn");
                         this.connect()
                     }
+
+                    this.ready = true;
                 })
             } else {
 
@@ -277,6 +281,8 @@ export default class Twitch {
                     this.logger("Connecting to Twitch...", "warn");
                     this.connect()
                 }
+
+                this.ready = true;
             }
         })
     }
@@ -369,12 +375,12 @@ export default class Twitch {
     }
 
     public async awaitConnection() {
-        if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub)) {
+        if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub) && this.ready) {
             return true;
         }
         return new Promise<void>((resolve, reject) => {
             const interval = setInterval(() => {
-                if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub)) {
+                if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub) && this.ready) {
                     clearInterval(interval);
                     resolve();
                 }
@@ -816,6 +822,10 @@ export default class Twitch {
         }).catch((err) => {
             if (err.response.status === 500) {
                 console.error('Internal Server Error!', err.response.data);
+            }
+        }).then((res) => {
+            if (res) {
+                return res.data.data[0];
             }
         })
     }

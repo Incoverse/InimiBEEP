@@ -2,7 +2,6 @@ import axios from "axios";
 import chalk from "chalk";
 import Twitch from "./twitch.js";
 import { config } from "dotenv";
-import { send } from "process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library'
@@ -13,7 +12,6 @@ import {
     englishDataset,
     TextCensor
 } from "obscenity"
-import TwentyFourHourStream from "./events/24hStream.js";
 const matcher = new RegExpMatcher({
 	...englishDataset.build(),
 	...englishRecommendedTransformers,
@@ -469,20 +467,6 @@ broadcaster.listen("eventsub", "channel.raid", 1, {to_broadcaster_user_id: broad
 await convertAllToID()
 
 
-broadcaster.events.on("channel.follow", async (data) => {
-    await handleEvent("follow", async (message) => {
-        if (message.includes("{{followers}}")) {
-            const followers = await broadcaster.getFollowers(true);
-            message = message.replace(/{{followers}}/g, followers.length.toString());
-        }
-        if (message.includes("{{name}}")) {
-            message = message.replace(/{{name}}/g, data.event.user_name);
-        }
-
-        return message;
-    })
-})
-
 sender.events.on("channel.chat.message", async (data) => {
     if (data.event.user_id === sender.SELF.id) return;
 
@@ -816,8 +800,6 @@ sender.events.on("channel.chat.message", async (data) => {
             await sender.sendMessage("EMOTE ONLY mode has been disabled!", messageID);
             emoteOnlyTimer = null;
         }, minutes*60*1000);
-    } else if (message == "!discord") {
-        await sender.sendMessage("Join our Discord server at https://discord.gg/SRYJdQhHee", messageID);
     } else if (message == "!swore" && isMod && noSwearing) {
         pushupcounterNS += pushupIncrement;
         await sender.sendMessage(`@${sender.CHANNEL.display_name} swore! +${pushupIncrement} pushup(s) (${pushupcounterNS} total)!`, messageID);
@@ -1556,22 +1538,6 @@ sender.events.on("channel.chat.message", async (data) => {
                 login: user.login
             });
         }
-    } else if (message.startsWith("!so ") && (isMod || helperIDs.includes(senderID))) {
-        let username = message.split(" ")[1];
-
-        if (username.startsWith("@")) {
-            username = username.slice(1);
-        }
-
-        const user = await sender.getUser(username);
-
-        if (!user) {
-            return await sender.sendMessage(`I couldn't find a user with the name "${username}"`, messageID);
-        }
-
-        const colors = ["purple" , "blue"]
-
-        await sender.sendChatAnnouncement(`Go check out ${username} at https://twitch.tv/${username}!`, colors[Math.floor(Math.random() * colors.length)] as "purple" | "blue");
     } else if (message.includes("@") && !message.startsWith("!") && senderID !== sender.SELF.id) {
         const mentions = message.match(/@([a-zA-Z0-9_]{4,25})/g) || [];
 
@@ -1687,6 +1653,3 @@ process.on("exit", onExit);
 
 broadcaster.logger("Ready!", "success")
 sender.logger("Ready!", "success")
-
-
-new TwentyFourHourStream(broadcaster, sender).exec();

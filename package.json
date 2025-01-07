@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rm -rf dist || del /f /s /q dist",
+    "build": "npm run clean && tsc && npx resolve-tspaths",
+    "start": "node dist/index",
+    "rewrite": "node dist/rewrite"
   },
   "keywords": [],
   "author": "",
@@ -17,8 +20,10 @@
   "dependencies": {
     "axios": "^1.7.5",
     "chalk": "^5.3.0",
+    "chokidar": "^4.0.3",
     "cron": "^3.2.1",
     "dotenv": "^16.4.5",
+    "eventemitter2": "^6.4.9",
     "express": "^4.19.2",
     "google-auth-library": "^9.15.0",
     "google-spreadsheet": "^4.1.4",
