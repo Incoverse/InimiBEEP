@@ -1,3 +1,20 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import axios from "axios";
 import EventEmitter from "events";
 import { modifyEnv } from "./utils.js";
@@ -5,21 +22,42 @@ import chalk from "chalk";
 import moment from "moment";
 import WebSocket from "ws";
 import prettyMilliseconds from "pretty-ms";
+import cron, { CronJob, CronTime } from "cron"
 
-const pubsubConnURL = 'wss://pubsub-edge.twitch.tv';
-const eventSubConnURL = 'wss://eventsub.wss.twitch.tv/ws';
+let eventSubConnURL = 'wss://eventsub.wss.twitch.tv/ws';
+
+function randomHash(length: number) {
+    let result = '';
+    const characters = 'abcdefghijklmnopqrstuvwxyz';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
 
 export default class Twitch {
-    private pubsubWS: WebSocket;
     private eventsubWS: WebSocket;
+    private ESKATimeout: number;
+    private ESKATimer: NodeJS.Timeout;
+    private lastEventMessage: Date;
     private esID: string;
-
-    private heartbeatInterval: NodeJS.Timeout;
 
     private ACCESS_TOKEN: string;
     private REFRESH_TOKEN: string;
 
     private CLIENT_ID: string;
+    private settings: {
+        ACCESS_TOKEN?: string,
+        REFRESH_TOKEN: string,
+        CLIENT_ID: string,
+        CLIENT_SECRET: string,
+        CHANNEL_ID?: string,
+        CHANNEL_NAME?: string,
+        EVENTSUB?: boolean,
+        ENV_PREFIX?: string,
+        DEBUG?: boolean
+    };
     private CLIENT_SECRET: string;
     public SELF: {
         id: string;
@@ -49,11 +87,9 @@ export default class Twitch {
         created_at: string;
     };
 
-    private tokenRefresher: NodeJS.Timeout;
-    private pubsubConnected = false;
+    private tokenRefresher: CronJob;
     private eventsubConnected = false;
 
-    private connectPubSub: boolean = true;
     private connectEventSub: boolean = true;
 
     private envPrefix: string = '';
@@ -63,9 +99,10 @@ export default class Twitch {
     private DEBUG: boolean = false;
 
 
-    private identifer = "NOIDENT";
 
-    private pubsubTopics = [];
+
+    private identifer = "NI-" + randomHash(5);
+
     private eventSubData: {
         id: string, 
         type: string;
@@ -75,7 +112,7 @@ export default class Twitch {
 
     private ready = false;
 
-    public logger(text: unknown, lvl: any) {
+    public logger(text: unknown, lvl: "info" | "warn" | "error" | "success" | "debug" | "debugSuccess" | "debugWarn" | "debugError" = "info") {
 
         let formatter = chalk.white.bold;
 
@@ -95,27 +132,117 @@ export default class Twitch {
             case "debug":
                 formatter = chalk.gray.bold;
                 break;
+            case "debugSuccess":
+                formatter = chalk.hex("#009900").bold;
+                break;
+            case "debugWarn":
+                formatter = chalk.hex("#bbbb00").bold;
+                break;
+            case "debugError":
+                formatter = chalk.hex("#bb0000").bold;
+                break;
             default:
                 formatter = chalk.white.bold;
                 break;
         }
 
 
-        if (this.DEBUG) {
-            console.log(
-                chalk.white.bold(
-                  "[" +
-                  moment().format("M/D/y HH:mm:ss") +
-                  "]", "[" + this.identifer + "]"),
-                formatter(text)
-              );
-        }
+        if (lvl.startsWith("debug") && !this.DEBUG) return;
+
+        console.log(
+            chalk.white.bold(
+                "[" +
+                moment().format("M/D/y HH:mm:ss") +
+                "]", "[" + this.identifer + "]"
+            ),
+            formatter(text)
+        );
     }
 
-    constructor(settings: { ACCESS_TOKEN?: string, REFRESH_TOKEN: string, CLIENT_ID: string, CLIENT_SECRET: string, CHANNEL_ID?: string, CHANNEL_NAME?: string, PUBSUB?: boolean, EVENTSUB?: boolean, ENV_PREFIX?: string, DEBUG?: boolean }) {
+    public async fetchUser(idLogin?: string) {
+        const query = !!idLogin ?
+            (isNaN(parseInt(idLogin)) ? `?login=${idLogin}` : `?id=${idLogin}`) : '';
+
+
+        return await axios.get(`https://api.twitch.tv/helix/users${query}`, {
+            headers: {
+                'Client-Id': this.CLIENT_ID,
+                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
+            }
+        }).then((res) => {
+            return res.data.data[0];
+        })
+
+    }
+
+    public async initialize() {
+        this.logger("Validating Access Token...", "info");
+        let expiresIn = await this.validateToken();
+        if (!expiresIn) {
+            this.logger("Access Token is invalid. Refreshing...", "debugWarn");
+        } else {
+            this.logger("Access Token is valid. Expires in: " + expiresIn + ` seconds (${prettyMilliseconds(expiresIn*1000)})`, "debugSuccess");
+        }
+
+        if (expiresIn < 60) {
+            this.logger("Access Token is expiring soon. Refreshing...", "debugWarn");
+            expiresIn = await this.refreshToken();
+            this.logger("Access Token refreshed. Expires in: " + expiresIn + ` seconds (${prettyMilliseconds(expiresIn*1000)})`, "debugSuccess");
+        }
+
+        await this.setupRefresher((!expiresIn || expiresIn < 60) ? 0 : expiresIn);
+        this.logger("Token Refresher initialized", "debugSuccess");
+
+        this.logger("Fetching current user info...", "debug");
+        const currentUser = await this.fetchUser()
+
+        this.SELF = currentUser;
+        this.identifer = currentUser.display_name;
+        this.logger("Successfully fetched current user info", "debugSuccess");
+
+        this.logger("Fetching channel info...", "debug");
+        this.CHANNEL = await this.fetchUser(this.settings.CHANNEL_NAME || this.settings.CHANNEL_ID);
+        this.logger("Successfully fetched channel info", "debugSuccess");
+
+        this.logger("Successfully initiated Twitch as " + this.SELF.display_name + " on channel " + this.CHANNEL.display_name, "success");
+
+        if (this.connectEventSub) {
+            this.logger("Connecting to Twitch...", "warn");
+            this.connect()
+        }
+
+        this.ready = true;
+    }
+
+    private async setupRefresher(expiresIn: number) {
+        if (this.tokenRefresher) {
+            this.tokenRefresher.stop();
+        }
+        this.tokenRefresher = new CronJob(expiresIn ? new Date(Date.now() + (expiresIn*1000) - 30000) : new Date(Date.now() + 100000000), async () => {
+
+            this.logger("Refreshing Access Token...", "warn");
+            const newExpires = await this.refreshToken();
+            this.logger("Access Token refreshed. Expires in: " + newExpires + ` seconds (${prettyMilliseconds(newExpires*1000)})`, "success");
+            
+            this.tokenRefresher.setTime(new CronTime(new Date(Date.now() + (newExpires*1000) - 30000)));
+            this.tokenRefresher.start();
+        }) 
+
+        if (!expiresIn) {
+            await this.tokenRefresher.fireOnTick();            
+        } else {
+            this.tokenRefresher.start();
+        }
+
+        return this.tokenRefresher;
+    }
+
+    constructor(settings: { ACCESS_TOKEN?: string, REFRESH_TOKEN: string, CLIENT_ID: string, CLIENT_SECRET: string, CHANNEL_ID?: string, CHANNEL_NAME?: string, EVENTSUB?: boolean, ENV_PREFIX?: string, DEBUG?: boolean, INITIAL_IDENTIFIER?: string }) {
         if (!settings) {
             throw new Error('Missing settings');
         }
+
+        this.settings = settings;
 
         if (settings.ACCESS_TOKEN) {
             this.ACCESS_TOKEN = settings.ACCESS_TOKEN;
@@ -133,7 +260,6 @@ export default class Twitch {
             throw new Error('Missing CLIENT_SECRET');
         } else this.CLIENT_SECRET = settings.CLIENT_SECRET;
 
-        this.connectPubSub = settings.PUBSUB ?? true;
         this.connectEventSub = settings.EVENTSUB ?? true;
 
         if (settings.ENV_PREFIX) {
@@ -144,198 +270,20 @@ export default class Twitch {
             this.DEBUG = settings.DEBUG;
         }
 
-        this.logger("Initializing Twitch...", "warn");
-
-
-        this.validateToken().then(async (expiresIn) => {
-            this.logger("Current Access Token expires in: " + expiresIn + ` seconds (${prettyMilliseconds(expiresIn*1000)})`, "debug");
-
-            if (expiresIn < 60) {
-                this.refreshToken().then(async (expiresIn) => {
-                    this.logger("Access Token refreshed. Expires in: " + expiresIn + ` seconds (${prettyMilliseconds(expiresIn*1000)})`, "success");
-                    this.tokenRefresher =  setInterval(() => {
-                        this.events.emit("tokenPreRefresh")
-                        this.refreshToken().then(async (expiresIn) => {
-                            this.events.emit("tokenRefreshed")
-                            this.logger("Access Token refreshed. Expires in: " + expiresIn + ` seconds (${prettyMilliseconds(expiresIn*1000)})`, "success");
-                            
-                            await axios.get(`https://api.twitch.tv/helix/users`, {
-                                headers: {
-                                    'Client-Id': this.CLIENT_ID,
-                                    'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                                }
-                            }).then((res) => {
-                                 this.SELF = res.data.data[0]
-                                 this.identifer = this.SELF.display_name;
-                            })
-
-                            if (settings.CHANNEL_NAME) {
-                                await axios.get(`https://api.twitch.tv/helix/users?login=${settings.CHANNEL_NAME}`, {
-                                    headers: {
-                                        'Client-Id': this.CLIENT_ID,
-                                        'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                                    }}).then((res) => {
-                                        this.CHANNEL = res.data.data[0];
-                                    })
-                            } else {
-                                await axios.get(`https://api.twitch.tv/helix/users?id=${settings.CHANNEL_ID}`, {
-                                    headers: {
-                                        'Client-Id': this.CLIENT_ID,
-                                        'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                                    }
-                                }).then((res) => {
-                                    this.CHANNEL = res.data.data[0];
-                                })
-                            }
-                        });
-                    }, (expiresIn * 1000) - 60000);
-
-                    await axios.get(`https://api.twitch.tv/helix/users`, {
-                        headers: {
-                            'Client-Id': this.CLIENT_ID,
-                            'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                        }
-                    }).then((res) => {
-                         this.SELF = res.data.data[0]
-                         this.identifer = this.SELF.display_name;
-                    })
-
-                    if (settings.CHANNEL_NAME) {
-                        await axios.get(`https://api.twitch.tv/helix/users?login=${settings.CHANNEL_NAME}`, {
-                            headers: {
-                                'Client-Id': this.CLIENT_ID,
-                                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                            }}).then((res) => {
-                                this.CHANNEL = res.data.data[0];
-                            })
-                    } else {
-                        await axios.get(`https://api.twitch.tv/helix/users?id=${settings.CHANNEL_ID}`, {
-                            headers: {
-                                'Client-Id': this.CLIENT_ID,
-                                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                            }
-                        }).then((res) => {
-                            this.CHANNEL = res.data.data[0];
-                        })
-                    }
-
-
-                    this.logger("Successfully initiated Twitch as " + this.SELF.display_name + " on channel " + this.CHANNEL.display_name, "success");
-
-                    if (this.connectPubSub || this.connectEventSub) {
-                        this.logger("Connecting to Twitch...", "warn");
-                        this.connect()
-                    }
-
-                    this.ready = true;
-                })
-            } else {
-
-                setTimeout(() => {
-                    this.events.emit("tokenPreRefresh")
-                    this.refreshToken().then((expiresIn2) => {
-                        this.events.emit("tokenRefreshed")
-                        this.logger("Access Token refreshed. Expires in: " + expiresIn2 + ` seconds (${prettyMilliseconds(expiresIn2*1000)})`, "success");
-                        this.tokenRefresher = setInterval(() => {
-                            this.events.emit("tokenPreRefresh")
-                            this.refreshToken().then((expiresIn3) => {
-                                this.events.emit("tokenRefreshed")
-                                this.logger("Access Token refreshed. Expires in: " + expiresIn3 + ` seconds (${prettyMilliseconds(expiresIn3*1000)})`, "success");
-                            });
-                        }, (expiresIn2 * 1000) - 60000);
-                    });
-                }, (expiresIn * 1000) - 60000);
-
-                await axios.get(`https://api.twitch.tv/helix/users`, {
-                    headers: {
-                        'Client-Id': this.CLIENT_ID,
-                        'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                    }
-                }).then((res) => {
-                     this.SELF = res.data.data[0]
-                     this.identifer = this.SELF.display_name;
-                })
-
-                if (settings.CHANNEL_NAME) {
-                    await axios.get(`https://api.twitch.tv/helix/users?login=${settings.CHANNEL_NAME}`, {
-                        headers: {
-                            'Client-Id': this.CLIENT_ID,
-                            'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                        }}).then((res) => {
-                            this.CHANNEL = res.data.data[0];
-                        })
-                } else {
-                    await axios.get(`https://api.twitch.tv/helix/users?id=${settings.CHANNEL_ID}`, {
-                        headers: {
-                            'Client-Id': this.CLIENT_ID,
-                            'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                        }
-                    }).then((res) => {
-                        this.CHANNEL = res.data.data[0];
-                    })
-                }
-                
-                this.logger("Successfully initiated Twitch as " + this.SELF.display_name + " on channel " + this.CHANNEL.display_name, "success");
-
-                if (this.connectPubSub || this.connectEventSub) {
-                    this.logger("Connecting to Twitch...", "warn");
-                    this.connect()
-                }
-
-                this.ready = true;
-            }
-        })
-    }
-
-    public connect() {
-        if (this.pubsubWS?.readyState !== WebSocket.OPEN && this.connectPubSub) {
-            this.pubsubWS = new WebSocket(pubsubConnURL);
-
-            this.pubsubWS.onopen = () => {
-                this.logger('Successfully connected to Twitch PubSub', 'success');
-                
-                if (this.heartbeatInterval) {
-                    clearInterval(this.heartbeatInterval);
-                }
-                this.logger('Starting heartbeat...', 'debug');
-                this.heartbeatInterval = setInterval(() => {
-                    this.heartbeat();
-                }, 60000);
-
-                this.pubsubConnected = true;
-            }
-
-            this.pubsubWS.onmessage = (event) => {
-                const data = JSON.parse(event.data.toString());
-                if (data.type === 'RECONNECT') {
-                    this.pubsubWS.close();
-                    clearInterval(this.heartbeatInterval);
-                    this.logger("Reconnecting to Twitch PubSub... (server requested)", "warn");
-                    this.connect()
-                } else if (data.type === 'MESSAGE') {
-                    const message = JSON.parse(data.data.message);
-                    this.events.emit(message.type, message.data);
-                }
-
-            }
-
-            this.pubsubWS.onclose = (c) => {
-                this.logger(`Disconnected from Twitch PubSub - (${c.code}) ${c.reason}`, 'error');
-                clearInterval(this.heartbeatInterval);
-                this.pubsubConnected = false;
-
-                if (this.connectPubSub) {
-                    this.connect();
-                }
-            }
-
-
-            this.pubsubWS.onerror = (err) => {
-                console.error(err);
-            }
+        if (settings.INITIAL_IDENTIFIER) {
+            this.identifer = settings.INITIAL_IDENTIFIER;
         }
 
+        this.logger("Initializing Twitch...", "warn");
+
+        this.initialize();
+    }
+
+
+
+    public async connect() {
         if (this.eventsubWS?.readyState !== WebSocket.OPEN && this.connectEventSub) {
+            this.logger("Initiating connection to Twitch EventSub...", "debug");
             this.eventsubWS = new WebSocket(eventSubConnURL);
 
             this.eventsubWS.onopen = () => {
@@ -344,27 +292,73 @@ export default class Twitch {
             }
 
             this.eventsubWS.onmessage = (event) => {
+                this.lastEventMessage = new Date();
                 const jsonified = JSON.parse(event.data.toString());
 
                 const msgType = jsonified.metadata.message_type
 
                 if (msgType === "session_welcome") {
+                    this.events.emit("welcomed", jsonified.payload);
                     this.esID = jsonified.payload.session.id
+                    this.ESKATimeout = jsonified.payload.session.keepalive_timeout_seconds * 1000;
+                    if (this.ESKATimer) {
+                        clearInterval(this.ESKATimer);
+                    }
+
+                    this.ESKATimer = setInterval(() => {
+
+                        if (new Date().getTime() - this.lastEventMessage.getTime() > (this.ESKATimeout + 4000)) {
+                            this.logger("No keep-alive message received. Reconnecting...", "warn");
+                            clearInterval(this.ESKATimer);
+                            this.eventsubWS.close(3177, "No keep-alive message received");
+                        }
+                    }, 500);
+
+
+                    this.eventSubData.forEach((evt) => {
+                        this.logger(`Re-subscribing to ${evt.type}...`, "warn");
+                        this.listen(evt.type, evt.version, evt.condition, true);
+                    })
                 } else if (msgType === "notification") {
                     this.events.emit(jsonified.metadata.subscription_type, jsonified.payload);
+                } else if (msgType === "session_keepalive") {
+                    // this.logger("Received keep-alive message", "debug");
+                } else if (msgType === "revocation") {
+                    this.logger("A recovation message was received regarding event type: " + jsonified.metadata.subscription_type, "warn");
+                } else if (msgType === "session_reconnect") {
+                    this.logger("Server requested a reconnect", "warn");
+                    let originalURL = eventSubConnURL;
+                    eventSubConnURL = jsonified.payload.session.reconnect_url || eventSubConnURL;
+                    const old = this.eventsubWS;
+
+                    this.eventsubWS = null
+                    this.eventsubConnected = false;
+                    this.connect();
+                    this.events.once("welcomed", (data) => {
+                        old.removeAllListeners();
+                        old.close(1000, "Reconnecting");
+                        eventSubConnURL = originalURL;
+                        this.logger("Reconnect complete", "success");
+                    })
+
+                } else {
+                    this.logger(`Received unknown message type from EventSub: ${msgType}`, "warn");
                 }
             }
 
             this.eventsubWS.onclose = (c) => {
                 this.logger(`Disconnected from Twitch EventSub - (${c.code}) ${c.reason}`, 'error');
                 this.eventsubConnected = false;
-
+                this.eventsubWS.removeAllListeners();
+                
                 if (this.connectEventSub) {
+                    this.logger("Attempting to reconnect to Twitch EventSub...", "warn");
                     this.connect();
                 }
             }
 
             this.eventsubWS.onerror = (err) => {
+                this.logger(`Error connecting to Twitch EventSub: ${err}`, 'error');
                 console.error(err);
             }
 
@@ -375,12 +369,12 @@ export default class Twitch {
     }
 
     public async awaitConnection() {
-        if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub) && this.ready) {
+        if ((this.eventsubConnected || !this.connectEventSub) && this.ready) {
             return true;
         }
         return new Promise<void>((resolve, reject) => {
             const interval = setInterval(() => {
-                if ((this.pubsubConnected || !this.connectPubSub) && (this.eventsubConnected || !this.connectEventSub) && this.ready) {
+                if ((this.eventsubConnected || !this.connectEventSub) && this.ready) {
                     clearInterval(interval);
                     resolve();
                 }
@@ -388,72 +382,40 @@ export default class Twitch {
         });
     }
 
-    private heartbeat() {
-        
-        this.logger('Sending heartbeat to Twitch PubSub', 'debug');
-        this.pubsubWS.send(JSON.stringify({
-            type: 'PING'
-        }));
-    }
 
-    public async listen(connType: "pubsub" | "eventsub", topic: string | string[], v:number|string = 1, conditions: any = {broadcaster_user_id: this.CHANNEL.id}, noSave=false) {
+    public async listen(topic: string, v:number|string = 1, conditions: any = {broadcaster_user_id: this.CHANNEL.id}, noSave=false) {
 
-        if (!this.pubsubConnected && connType === "pubsub") {
-            throw new Error('Not connected to Twitch PubSub');
-        } else if (!this.eventsubConnected && connType === "eventsub") {
+        if (!this.eventsubConnected) {
             throw new Error('Not connected to Twitch EventSub');
         }
 
-        if (connType === "pubsub") {
-            if (topic instanceof Array) {
-                topic.forEach((t) => {
-                    this.logger(`Registering '${topic}' PubSub subscription...`, "warn");
-                })
-            } else {
-                this.logger(`Registering '${topic}' PubSub subscription...`, "warn");
-            }
-            this.pubsubWS.send(JSON.stringify({
-                type: 'LISTEN',
-                data: {
-                    topics: topic instanceof Array ? topic : [topic],
-                    auth_token: this.ACCESS_TOKEN
-                }
-            }))
-
-            if (!noSave) this.pubsubTopics = Array.from(new Set(this.pubsubTopics.concat(topic instanceof Array ? topic : [topic])));
-        } else if (connType === "eventsub") {
-            
-            if (topic instanceof Array) {
-                throw new Error('EventSub does not support multiple topics at once');
-            }
-            
+        if (!noSave)
             this.logger(`Registering '${topic}' EventSub subscription...`, "warn");
 
-            return await axios.post(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
-                type: topic,
-                version: v.toString(),
-                condition: conditions,
-                transport: {
-                    method: 'websocket',
-                    session_id: this.esID
-                }
-            }, {
-                headers: {
-                    'Client-Id': this.CLIENT_ID,
-                    'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                }
-            }).then((res) => {
-                const jsonified = res.data instanceof Object || res.data instanceof Array ? res.data : JSON.parse(res.data);
-                if (!noSave) {
-                    this.eventSubData.push({
-                        id: jsonified.data[0].id,
-                        type: topic,
-                        version: v.toString(),
-                        condition: conditions
-                    })
-                }
-            })
-        }
+        return await axios.post(`https://api.twitch.tv/helix/eventsub/subscriptions`, {
+            type: topic,
+            version: v.toString(),
+            condition: conditions,
+            transport: {
+                method: 'websocket',
+                session_id: this.esID
+            }
+        }, {
+            headers: {
+                'Client-Id': this.CLIENT_ID,
+                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
+            }
+        }).then((res) => {
+            const jsonified = res.data instanceof Object || res.data instanceof Array ? res.data : JSON.parse(res.data);
+            if (!noSave) {
+                this.eventSubData.push({
+                    id: jsonified.data[0].id,
+                    type: topic,
+                    version: v.toString(),
+                    condition: conditions
+                })
+            }
+        })
     }
 
     public async getSubscriptions() {
@@ -467,61 +429,37 @@ export default class Twitch {
         })
     }
 
-    public unlisten(connType: "pubsub" | "eventsub", topicOrID: string | string[]) {
-        if (!this.pubsubConnected && connType === "pubsub") {
-            throw new Error('Not connected to Twitch PubSub');
-        } else if (!this.eventsubConnected && connType === "eventsub") {
+    public unlisten(id: string) {
+        if (!this.eventsubConnected) {
             throw new Error('Not connected to Twitch EventSub');
         }
 
-        if (connType === "pubsub") {
-            this.pubsubWS.send(JSON.stringify({
-                type: 'UNLISTEN',
-                data: {
-                    topics: topicOrID instanceof Array ? topicOrID : [topicOrID],
-                    auth_token: this.ACCESS_TOKEN
-                }
-            }));
-        } else if (connType === "eventsub") {
-            if (topicOrID instanceof Array) {
-                throw new Error('EventSub does not support multiple IDs at once');
-            }
 
-            axios.delete(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${topicOrID}`, {
-                headers: {
-                    'Client-Id': this.CLIENT_ID,
-                    'Authorization': `Bearer ${this.ACCESS_TOKEN}`
-                }
-            })
-        }
+        axios.delete(`https://api.twitch.tv/helix/eventsub/subscriptions?id=${id}`, {
+            headers: {
+                'Client-Id': this.CLIENT_ID,
+                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
+            }
+        })
     }
 
     public async cleanup() {
-        if (this.pubsubWS && this.pubsubConnected) {
-
-            if (this.heartbeatInterval) {
-                clearInterval(this.heartbeatInterval);
-            }
-
-            if (this.pubsubTopics.length > 0) this.unlisten("pubsub", this.pubsubTopics)
-
-            this.pubsubWS.close();
-        }
-
         if (this.eventsubWS && this.eventsubConnected) {
 
             if (this.eventSubData.length > 0) {
                 this.eventSubData.forEach((data) => {
-                    this.unlisten("eventsub", data.id);
+                    this.unlisten(data.id);
                 })
             }
 
+            this.eventsubWS.removeAllListeners();
+            clearInterval(this.ESKATimer);
+            this.connectEventSub = false;
             this.eventsubWS.close();
         }
     }
 
     private async validateToken() {
-
         if (!this.ACCESS_TOKEN) return 0
 
         return await axios.get(`https://id.twitch.tv/oauth2/validate`, {
@@ -545,15 +483,6 @@ export default class Twitch {
                 modifyEnv(`${this.envPrefix}REFRESH_TOKEN`, this.REFRESH_TOKEN);
                 modifyEnv(`${this.envPrefix}ACCESS_TOKEN`, this.ACCESS_TOKEN);
                 
-                if (this.pubsubConnected) {
-                    clearInterval(this.heartbeatInterval);
-                    this.heartbeatInterval = null;
-                    this.pubsubWS.removeAllListeners();
-                    this.pubsubWS.close();
-                    this.pubsubWS = null;
-                    this.pubsubConnected = false;
-                    this.logger(`Disconnected from Twitch PubSub - (token is refreshing)`, 'error');
-                }
                 if (this.eventsubConnected) {
                     this.eventsubWS.removeAllListeners();
                     this.eventsubWS.close();
@@ -565,13 +494,8 @@ export default class Twitch {
                 this.connect();
                 await this.awaitConnection();
 
-                if (this.pubsubConnected) {
-                    this.listen("pubsub", this.pubsubTopics, undefined, undefined, true);
-                }
                 if (this.eventsubConnected) {
-                    this.eventSubData.forEach((evt) => {
-                        this.listen("eventsub", evt.type, evt.version, evt.condition, true);
-                    })
+                    this.logger("Connection re-established with Twitch EventSub", "success");
                 }
 
                 return res.data.expires_in;
@@ -822,6 +746,8 @@ export default class Twitch {
         }).catch((err) => {
             if (err.response.status === 500) {
                 console.error('Internal Server Error!', err.response.data);
+            } else {
+                console.error(err.response.data);
             }
         }).then((res) => {
             if (res) {
@@ -1168,6 +1094,18 @@ export default class Twitch {
         }).then((res) => {
             return res.data.data.length > 0;
         })
+    }
+
+    public async getChatSettings(id: string = this.CHANNEL.id) {
+        
+        return await axios.get(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${id}`, {
+            headers: {
+                'Client-Id': this.CLIENT_ID,
+                'Authorization': `Bearer ${this.ACCESS_TOKEN}`
+            }
+        }).then((res) => {
+            return res.data.data[0];
+        });
     }
 
     public async getStreamInfo(id: string|string[], settings:{all?:boolean}={all: false}) {

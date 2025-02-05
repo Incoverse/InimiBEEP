@@ -1,3 +1,20 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Twitch from "@src/twitch.js";
 import CacheManager from "../cacheManager.js";
 import { TwitchPermissions } from "../misc.js";
@@ -49,50 +66,50 @@ export default abstract class IBEEPCommand {
 }
 
 export type Message = {
-    "broadcaster_user_id": string,
-    "broadcaster_user_login": string,
-    "broadcaster_user_name": string,
-    "chatter_user_id": string,
-    "chatter_user_login": string,
-    "chatter_user_name": string,
-    "message_id": string,
-    "message": {
-      "text": string,
-      "fragments":
-        {
-          "type": "text",
-          "text": string,
-          "cheermote": null,
-          "emote": null,
-          "mention": null
-        }[]
-    },
-    "color": string,
-    "badges": (
+  broadcaster_user_id: string;
+  broadcaster_user_login: string;
+  broadcaster_user_name: string;
+  chatter_user_id: string;
+  chatter_user_login: string;
+  chatter_user_name: string;
+  message_id: string;
+  message: {
+    text: string;
+    fragments:
       {
-        "set_id": string
-        "id": string,
-        "info": string
-      }
-    )[],
-    "message_type": "text",
-    "cheer": null,
-    "reply": null | {
-      "parent_message_id": string,
-      "parent_message_body": string,
-      "parent_user_id": string,
-      "parent_user_name": string,
-      "parent_user_login": string,
-      "thread_message_id": string,
-      "thread_user_id": string,
-      "thread_user_name": string,
-      "thread_user_login": string
-    },
-    "channel_points_custom_reward_id": null,
-    "source_broadcaster_user_id": null,
-    "source_broadcaster_user_login": null,
-    "source_broadcaster_user_name": null,
-    "source_message_id": null,
-    "source_badges": null
-  }
+        type: "text";
+        text: string;
+        cheermote: null;
+        emote: null;
+        mention: null
+      }[]
+  };
+  color: string;
+  badges: (
+    {
+      set_id: string
+      id: string;
+      info: string
+    }
+  )[];
+  message_type: "text";
+  cheer: null;
+  reply: null | {
+    parent_message_id: string;
+    parent_message_body: string;
+    parent_user_id: string;
+    parent_user_name: string;
+    parent_user_login: string;
+    thread_message_id: string;
+    thread_user_id: string;
+    thread_user_name: string;
+    thread_user_login: string
+  };
+  channel_points_custom_reward_id: null;
+  source_broadcaster_user_id: null;
+  source_broadcaster_user_login: null;
+  source_broadcaster_user_name: null;
+  source_message_id: null;
+  source_badges: null
+}
 

@@ -1,13 +1,36 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import express from 'express';
 import {config} from 'dotenv';
 import axios from 'axios';
-
+import { input } from '@inquirer/prompts';
+import ee2 from 'eventemitter2';
+import { modifyEnv } from './utils.js';
 // import Twitch from "./twitch.js";
 
 config();
 
 const app = express();
 const port = 7380;
+
+const comm = new ee2.EventEmitter2({
+    ignoreErrors: true
+});
 
 const scopes = [
     "openid",
@@ -96,14 +119,24 @@ app.get('/TPBS/callback', (req, res) => {
 
     axios.post(`https://id.twitch.tv/oauth2/token?client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=http://localhost:7380/TPBS/callback`)
         .then((response) => {
-            console.log(response.data);
-            res.send(response.data);
+
+            res.send("completed");
+            comm.emit("auth", response.data);
+            app.close();
         }).catch((err) => {
             console.log(err);
             res.send(err);
         });
 
 });
+
+
+const answer = await input({ message: 'Who is authenticating this token? (CHATTER/MAIN)?', validate(value) {
+    if (value.toUpperCase() === "CHATTER" || value.toUpperCase() === "MAIN") {
+        return true;
+    }
+    return "Invalid value, please enter either CHATTER or MAIN";
+}, });
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
@@ -115,54 +148,17 @@ let scopesNotDuplicated = scopes.filter((value, index) => {
     return scopes.indexOf(value) === index;
 })
 
-console.log("Authenticate at: ", `https://id.twitch.tv/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=http://localhost:7380/TPBS/callback&response_type=code&scope=${scopesNotDuplicated.join("+")}`);
+
+console.log(`Authenticate at: https://id.twitch.tv/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=http://localhost:7380/TPBS/callback&response_type=code&scope=${scopesNotDuplicated.join("+")}`);
 
 
-// GET https://api.twitch.tv/helix/users
-
-// Headers:
-//     Authorization: OAuth <process.env.ACCESS_TOKEN>
-
-// const response = await axios.get("https://id.twitch.tv/oauth2/validate", {
-//     headers: {
-//         'Authorization': `OAuth ${process.env.ACCESS_TOKEN}`
-//     }
-// });
-
-// console.log(response.data);
-
-
-
-// import Twitch from './twitch.js';
-
-// const channelID = "166392405"
-
-// const twitch = new Twitch({
-//     ACCESS_TOKEN: process.env.ACCESS_TOKEN,
-//     REFRESH_TOKEN: process.env.REFRESH_TOKEN,
-//     CLIENT_ID: process.env.CLIENT_ID,
-//     CLIENT_SECRET: process.env.CLIENT_SECRET,
-//     CHANNEL_ID: channelID
-// });
-
-// await twitch.awaitConnection();
-
-
-// //listen for channel point events
-
-
-
-// twitch.events.on("reward-redeemed", async (data) => {
-
-//     const redemptionID = data.redemption.reward.id;
-
-//     console.log(`Redemption ID: ${redemptionID}`);
-
-
-
-// })
-
-// twitch.listen(`channel-points-channel-v1.${channelID}`);
-
-// await twitch.addMod("795634441")
-
+comm.on("auth", async (data) => {
+    console.log("\n\n\n\n")
+    console.log("Authentication completed. Saving...")
+    console.log(`Saving Access Token as ${answer.toUpperCase()}_ACCESS_TOKEN`);
+    modifyEnv(`${answer.toUpperCase()}_ACCESS_TOKEN`, data.access_token);
+    console.log(`Saving Refresh Token as ${answer.toUpperCase()}_REFRESH_TOKEN`);
+    modifyEnv(`${answer.toUpperCase()}_REFRESH_TOKEN`, data.refresh_token);
+    console.log(`Saved as environment variables for ${answer.toUpperCase()}`);
+    process.exit(0);
+})

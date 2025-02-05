@@ -1,3 +1,20 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { Message } from "@src/lib/base/IBEEPCommand.js";
 import IBEEPEvent, { EventInfo } from "@src/lib/base/IBEEPEvent.js";
 import Twitch from "@src/twitch.js";
@@ -26,7 +43,6 @@ export default class TFHOnCheer extends IBEEPEvent {
         if (this.messageEventRegistered === null) {
             const registered = global.registeredTwitchEvents.some((event) => 
                 event.as == "sender" &&
-                event.type == "eventsub" &&
                 event.name == "channel.chat.message" &&
                 event.condition.broadcaster_user_id == data.event.broadcaster_user_id &&
                 event.version == 1
@@ -35,14 +51,13 @@ export default class TFHOnCheer extends IBEEPEvent {
             if (registered) {
                 this.messageEventRegistered = true;
             } else {
-                await this.sender.listen("eventsub", "channel.chat.message", 1, {
+                await this.sender.listen("channel.chat.message", 1, {
                     broadcaster_user_id: this.broadcaster.SELF.id,
                     user_id: this.sender.SELF.id
                 })
 
                 global.registeredTwitchEvents.push({
                     as: "sender",
-                    type: "eventsub",
                     name: "channel.chat.message",
                     version: 1,
                     condition: {

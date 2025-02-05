@@ -1,10 +1,25 @@
 {
     "pushupIncrements": {
-        "noSwearing": 10
+        "noSwearing": 10,
+        "wordBan": 10,
+        "accent": 10,
+        "customChallenge": 25,
+        "swedishOnly": 10,
+        "noLaughing": 10
     },
-    "timerLengthts": {
-        "noSwearing": 10
+    "timerLengths": {
+        "noSwearing": 10,
+        "wordBan": 5,
+        "accent": 10,
+        "customChallenge": 10,
+        "swedishOnly": 5,
+        "noLaughing": 10,
+        "BDLG": 20,
+        "emoteOnly": 5
     },
+
+    "timeoutDuration": 300,
+    "emoteOnlyDuration": 300,
 
     "discordInvite": "https://discord.gg/abcdefghij"
 }

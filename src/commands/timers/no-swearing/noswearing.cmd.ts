@@ -1,5 +1,22 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, permUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 import { CronJob, CronTime } from "cron";
 
 declare const global: IBEEPGlobal;
@@ -14,7 +31,10 @@ export default class NoSwearingCMD extends IBEEPCommand {
     }
 
     public async exec(message: Message): Promise<any> {
-        if (!permUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {
+        if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {
+            if (!(await conditionUtils.isLive())) {
+                return await this.sender.sendMessage(`I can't start a timer when the stream isn't live!`, message.message_id);
+            }
             const secondParameter = message.message.text.match(this.messageTrigger)[2];
 
             let minutes = global.config.timerLengths.noSwearing
@@ -31,7 +51,7 @@ export default class NoSwearingCMD extends IBEEPCommand {
                             global.additional.noSwearing = false;
                             global.timers.noSwearing = null;
                             global.commChannel.emit("no-swearing:finish");
-                            return
+                            return await this.sender.sendMessage(`Timer has been stopped!`, message.message_id);
                         }
                         return await this.sender.sendMessage(`There is no NO CURSING timer running!`, message.message_id);
                     case "abort":
@@ -55,6 +75,12 @@ export default class NoSwearingCMD extends IBEEPCommand {
                         }
 
                         minutes = parseInt(thirdParameter);
+                        global.timers.noSwearing.setTime(
+                            new CronTime(new Date(global.timers.noSwearing.nextDate().toJSDate().getTime() + (minutes*60*1000) - Date.now()))
+                        )
+        
+                        global.commChannel.emit("no-swearing:extend", minutes);
+                        await this.sender.sendMessage(`The NO CURSING timer has been extended by ${minutes} minute${minutes == 1 ? "" : "s"}!`, message.message_id);
                         break;
                     case "set":
                         const thirdParameter2 = message.message.text.match(this.messageTrigger)[3];
@@ -81,19 +107,6 @@ export default class NoSwearingCMD extends IBEEPCommand {
 
             global.additional.noSwearing = true;
 
-            if ((global.timers.noSwearing && global.timers.noSwearing.running)) {
-                
-                
-                global.timers.noSwearing.setTime(
-                    new CronTime(new Date(global.timers.noSwearing.nextDate().toJSDate().getTime() + (minutes*60*1000) - Date.now()))
-                )
-
-                global.commChannel.emit("no-swearing:extend", minutes);
-                await this.sender.sendMessage(`The NO CURSING timer has been extended by ${minutes} minute${minutes == 1 ? "" : "s"}!`, message.message_id);
-            }
-
-
-
             global.timers.noSwearing = new CronJob(new Date(Date.now() + minutes*60*1000), async () => {
                 let additionalText = ""
 
@@ -103,10 +116,10 @@ export default class NoSwearingCMD extends IBEEPCommand {
                     additionalText = ` (Owes: ${Math.abs(global.additional.pushups)} pushup${Math.abs(global.additional.pushups) == 1 ? "" : "s"})`
                 }
 
-                await this.sender.sendMessage(`@${this.sender.CHANNEL.display_name} can now swear. F**k yeah! ${additionalText}`);
                 global.additional.noSwearing = false;
                 global.timers.noSwearing = null;
                 global.commChannel.emit("no-swearing:finish");
+                await this.sender.sendMessage(`@${this.sender.CHANNEL.display_name} can now swear. F**k yeah! ${additionalText}`);
             })
             
             global.timers.noSwearing.start();

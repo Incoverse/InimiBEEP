@@ -1,3 +1,20 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Twitch from "@src/twitch.js";
 import CacheManager from "../cacheManager.js";
 
@@ -51,5 +68,5 @@ export default abstract class IBEEPEvent {
 }
 
 export type EventInfo = { type: "InimiBEEP:start"; priority: number; } | { type: "InimiBEEP:exit"; priority: number; } | TwitchEventInfo;
-export type TwitchEventInfo = { type: "twitchEvent"; event: { as: "broadcaster" | "sender"; type: "pubsub"; name: string; } | { as: "broadcaster" | "sender"; type: "eventsub"; name: string; version: number | string; condition: { [key: string]: string | number; } | null; }; }
+export type TwitchEventInfo = { type: "twitchEvent"; event: { as: "broadcaster" | "sender"; name: string; version: number | string; condition: { [key: string]: string | number; } | null; }; }
 export type TakesBroadcasterSender = { broadcaster: Twitch | null; sender: Twitch | null };

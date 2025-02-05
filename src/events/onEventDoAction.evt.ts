@@ -1,3 +1,20 @@
+/*
+  * Copyright (c) 2025 Inimi | InimicalPart | Incoverse
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { Message } from "@src/lib/base/IBEEPCommand.js";
 import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
 import { readFileSync } from "fs";
@@ -34,7 +51,6 @@ export default class OEDA extends IBEEPEvent {
                 type: "twitchEvent",
                 event: {
                     as: "sender",
-                    type: "eventsub",
                     name: "channel.follow",
                     version: 2,
                     condition: {
@@ -76,7 +92,7 @@ export default class OEDA extends IBEEPEvent {
                 console.error("Error watching events.json", error);
             })
             .on("ready", () => {
-                console.log("Watching events.json");
+                global.logger("Watching events.json for changes", "info");
                 watcherReady = true;
             })
 
