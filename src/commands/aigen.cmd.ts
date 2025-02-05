@@ -235,7 +235,7 @@ export default class AIGenCMD extends IBEEPCommand {
 
         
         const username = message.chatter_user_name;
-        const isFollowing = await this.broadcaster.isFollower(username);
+        const isFollowing = await this.broadcaster.isFollower(message.chatter_user_id);
         const permissionLevel = conditionUtils.getHighestPermission(message, true);
 
         const content = `[PREFIX]\nSender's ID: ${message.chatter_user_id}\nSender's name: ${username}\nSender is following DrVem: ${isFollowing}\nSender's highest permission: ${permissionLevel}\n[/PREFIX]\n\n[SENDERS-MESSAGE]\n${prompt}\n[/SENDERS-MESSAGE]`;
