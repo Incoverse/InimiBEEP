@@ -16,6 +16,7 @@
  */
 
 import { Message } from "./base/IBEEPCommand.js"
+import { exec } from "child_process";
 
 declare const global: IBEEPGlobal;
 
@@ -168,6 +169,35 @@ export function parameterize(CMD: string) {
   return obj;
 }
 
+
+export async function runTerminalCommand(command: string) {
+  return new Promise<string>((resolve, reject) => {
+    
+    console.log(`[CMD] Running command: ${command}`);
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+        if (stderr && !stdout) {
+            reject(stderr.trim());
+            return;
+        }
+
+      resolve(stdout.trim());
+    });
+  });
+}
+
+export async function commandExists(command: string) {
+  try {
+    await runTerminalCommand(`command -v ${command}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function convertAllToID() {
   let rows = await global.additional.randomRaidSheet.getRows();
