@@ -20,8 +20,7 @@ import {config} from 'dotenv';
 import axios from 'axios';
 import { input } from '@inquirer/prompts';
 import ee2 from 'eventemitter2';
-import { modifyEnv } from './utils.js';
-// import Twitch from "./twitch.js";
+import { modifyEnv } from '@src/lib/misc.js';
 
 config();
 
@@ -150,7 +149,8 @@ let scopesNotDuplicated = scopes.filter((value, index) => {
 
 
 console.log(`Authenticate at: https://id.twitch.tv/oauth2/authorize?client_id=${process.env.CLIENT_ID}&redirect_uri=http://localhost:7380/TPBS/callback&response_type=code&scope=${scopesNotDuplicated.join("+")}`);
-
+console.log("")
+console.log("Make sure 'http://localhost:7380/TPBS/callback' is added to the redirect URI in your Twitch Developer Console");
 
 comm.on("auth", async (data) => {
     console.log("\n\n\n\n")

@@ -16,12 +16,13 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { orHigher, conditionUtils, TwitchPermissions, parseDuration } from "@src/lib/misc.js";
+import prettyMilliseconds from "pretty-ms";
 
 declare const global: IBEEPGlobal;
 
 export default class RunAdCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!runad\s+(\d+)$/;
+    public messageTrigger: RegExp = /^!runad\s+(.+)$/;
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Moderator))) {
@@ -30,15 +31,18 @@ export default class RunAdCMD extends IBEEPCommand {
                 return
             }
             
-            const secondsLength = parseInt(message.message.text.match(this.messageTrigger)[1]);
+            const length = message.message.text.match(this.messageTrigger)[1];
+
+            const secondsLength = isNaN(parseInt(length)) ? Math.round(parseDuration(length)/1000) : parseInt(length);
+            
 
             if (![30,60,90,120,150,180].includes(secondsLength)) {
-                await this.sender.sendMessage("Please provide a valid ad duration (30, 60, 90, 120, 150, 180)", message.message_id);
+                await this.sender.sendMessage("Please provide a valid ad duration (30s, 1m, 1m30s, 2m, 2m30s, 3m)", message.message_id);
                 return
             }
     
-            this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
-            console.log("Running commercials for " + secondsLength + " seconds");
+            await this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
+            await this.sender.sendMessage(`Running a ${prettyMilliseconds(secondsLength * 1000).split(" ").map(a=>a.replace(/s$/, "")).join(" ")} ad`, message.message_id);
         }
     }
 

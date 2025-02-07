@@ -16,12 +16,12 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { conditionUtils } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
 export default class LurkCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!lurk$/;
+    public messageTrigger: RegExp = /!lurk/;
 
     public async setup(): Promise<boolean | null> {
         if (!global.additional.lurkedUsers) global.additional.lurkedUsers = [];

@@ -26,7 +26,7 @@ export default class RestartCMD extends IBEEPCommand {
     public messageTrigger: RegExp = /^!re(start|boot)$/;
 
     public async exec(message: Message): Promise<any> {
-        if (conditionUtils.meetsPermission(message, [orHigher(TwitchPermissions.Moderator)])) {   
+        if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Moderator))) {   
             await this.sender.sendMessage("Restarting...", message.message_id);
             runTerminalCommand('sudo systemctl restart InimiBEEP')
         }

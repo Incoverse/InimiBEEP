@@ -15,10 +15,8 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Message } from "@src/lib/base/IBEEPCommand.js";
 import IBEEPEvent, { EventInfo, TakesBroadcasterSender } from "@src/lib/base/IBEEPEvent.js";
 import { RedemptionInfo, TwitchRedemptionEvent } from "@src/lib/base/IBEEPRedemptionTrigger.js";
-import Twitch from "@src/twitch.js";
 
 declare const global: IBEEPGlobal;
 

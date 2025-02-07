@@ -37,7 +37,6 @@ export default class VIPCMD extends IBEEPCommand {
 
             if (isMod) {
                 await this.broadcaster.removeMod(user.id);
-                return;
             }
     
             await this.broadcaster.addVIP(user.id);

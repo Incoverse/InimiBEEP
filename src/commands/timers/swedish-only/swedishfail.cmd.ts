@@ -59,6 +59,7 @@ export default class SwedishFailCMD extends IBEEPCommand {
             }
             if (global.timers.swedishOnly && global.timers.swedishOnly.running) {
                 global.additional.pushups += pushupAdd;
+                this.pushupTracker += pushupAdd;
                 this.sender.sendMessage(`@${this.broadcaster.SELF.display_name} failed to stick to Swedish! (+${pushupAdd} pushup${pushupAdd==1?"":"s"})`, message.message_id);
             }
         }

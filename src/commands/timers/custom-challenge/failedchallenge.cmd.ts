@@ -25,31 +25,11 @@ let pushupAdd = global.config.pushupIncrements.customChallenge
 export default class ChallengeFailCMD extends IBEEPCommand {
     public messageTrigger: RegExp = /^!(failedchallenge|challengefail|customfail)$/;
 
-    private pushupTracker: number = 0;
-
-    private resetTracker() {
-        this.pushupTracker = 0;
-    }
-
-    private removeNotedPushups() {
-        global.additional.pushups -= this.pushupTracker; //! The counter can go negative, this is intended (owe system)
-    }
 
     public setup(): Promise<boolean | null> {
-
-        global.commChannel.on(["custom-challenge:start", "custom-challenge:finish"], this.resetTracker);
-        global.commChannel.on("custom-challenge:abort", this.removeNotedPushups);
-
         if (!global.additional.pushups) global.additional.pushups = 0;
 
         return super.setup();
-    }
-
-    public unload(): Promise<boolean | null> {
-        global.commChannel.off(["custom-challenge:start", "custom-challenge:finish"], this.resetTracker);
-        global.commChannel.off("custom-challenge:abort", this.removeNotedPushups);
-
-        return super.unload();
     }
 
     public async exec(message: Message): Promise<any> {

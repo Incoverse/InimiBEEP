@@ -19,11 +19,11 @@ import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
 import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 declare const global: IBEEPGlobal;
 
-let pushupAdd = 1
+let pushupAdd = global.config.pushupIncrements.theTower;
 
 
 export default class TheTowerCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!(the|)tower$/;
+    public messageTrigger: RegExp = /^!(the)?tower$/;
 
 
     public setup(): Promise<boolean | null> {

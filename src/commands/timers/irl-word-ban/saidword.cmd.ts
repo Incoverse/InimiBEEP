@@ -59,6 +59,7 @@ export default class SaidWordCMD extends IBEEPCommand {
             }
             if (global.timers.wordBan && global.timers.wordBan.running) {
                 global.additional.pushups += pushupAdd;
+                this.pushupTracker += pushupAdd;
                 this.sender.sendMessage(`@${this.broadcaster.SELF.display_name} said the banned word(s)! (+${pushupAdd} pushup${pushupAdd==1?"":"s"})`, message.message_id);
             }
         }

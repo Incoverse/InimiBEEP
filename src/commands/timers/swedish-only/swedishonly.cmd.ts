@@ -17,9 +17,9 @@
 
 
     
-    import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-    import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
-    import { CronJob, CronTime } from "cron";
+import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
+import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { CronJob, CronTime } from "cron";
     
 declare const global: IBEEPGlobal;
 

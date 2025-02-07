@@ -16,7 +16,7 @@
  */
 
 
-import { Ollama, ChatResponse, ToolCall, Message } from 'ollama';
+import { Ollama, ChatResponse, ToolCall } from 'ollama';
 import IBEEPCommand, { Message as ChatMessage } from "@src/lib/base/IBEEPCommand.js";
 import { orHigher, conditionUtils, TwitchPermissions } from '@src/lib/misc.js';
 import { writeFileSync } from 'fs';

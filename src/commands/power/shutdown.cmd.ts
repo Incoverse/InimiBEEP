@@ -16,7 +16,7 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 import { runTerminalCommand } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
@@ -27,7 +27,7 @@ export default class ShutdownCMD extends IBEEPCommand {
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, [TwitchPermissions.Broadcaster, TwitchPermissions.Inimi])) {   
-            await this.sender.sendMessage("Stopping...", message.message_id);
+            await this.sender.sendMessage("Shutting down...", message.message_id);
             runTerminalCommand('sudo systemctl stop InimiBEEP')
         }
 

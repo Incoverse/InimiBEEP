@@ -15,7 +15,7 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
+import IBEEPEvent, { EventInfo, TakesBroadcasterSender } from "@src/lib/base/IBEEPEvent.js";
 
 declare const global: IBEEPGlobal;
 

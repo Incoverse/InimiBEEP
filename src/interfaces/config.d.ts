@@ -6,6 +6,7 @@ interface IBEEPConfig {
         customChallenge: number // Pushups to add when the broadcaster fails the custom challenge
         swedishOnly: number // Pushups to add when the broadcaster speaks English during Swedish Only
         noLaughing: number // Pushups to add when the broadcaster laughs during No Laughing
+        theTower: number // Pushups to add when the broadcaster looks or plays The Tower
     };
     timerLengths: {
         noSwearing: number // in minutes

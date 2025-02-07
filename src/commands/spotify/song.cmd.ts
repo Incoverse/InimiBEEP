@@ -15,7 +15,6 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SpotifySettings } from "@src/events/onSetupSetupSpotify.evt.js";
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
 import { conditionUtils } from "@src/lib/misc.js";
 

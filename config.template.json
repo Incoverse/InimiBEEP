@@ -5,7 +5,8 @@
         "accent": 10,
         "customChallenge": 25,
         "swedishOnly": 10,
-        "noLaughing": 10
+        "noLaughing": 10,
+        "theTower": 1
     },
     "timerLengths": {
         "noSwearing": 10,

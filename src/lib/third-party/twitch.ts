@@ -17,12 +17,12 @@
 
 import axios from "axios";
 import EventEmitter from "events";
-import { modifyEnv } from "./utils.js";
+import { modifyEnv } from "@src/lib/misc.js";
 import chalk from "chalk";
 import moment from "moment";
 import WebSocket from "ws";
 import prettyMilliseconds from "pretty-ms";
-import cron, { CronJob, CronTime } from "cron"
+import { CronJob, CronTime } from "cron"
 
 let eventSubConnURL = 'wss://eventsub.wss.twitch.tv/ws';
 
@@ -218,7 +218,7 @@ export default class Twitch {
         if (this.tokenRefresher) {
             this.tokenRefresher.stop();
         }
-        this.tokenRefresher = new CronJob(expiresIn ? new Date(Date.now() + (expiresIn*1000) - 30000) : new Date(Date.now() + 100000000), async () => {
+        this.tokenRefresher = new CronJob(expiresIn >= 60 ? new Date(Date.now() + (expiresIn*1000) - 30000) : new Date(Date.now() + 300000), async () => {
 
             this.logger("Refreshing Access Token...", "warn");
             const newExpires = await this.refreshToken();
@@ -478,7 +478,8 @@ export default class Twitch {
             .then(async (res) => {
                 this.ACCESS_TOKEN = res.data.access_token;
                 this.REFRESH_TOKEN = res.data.refresh_token;
-
+                process.env[this.envPrefix + 'REFRESH_TOKEN'] = this.REFRESH_TOKEN;
+                process.env[this.envPrefix + 'ACCESS_TOKEN'] = this.ACCESS_TOKEN;
 
                 modifyEnv(`${this.envPrefix}REFRESH_TOKEN`, this.REFRESH_TOKEN);
                 modifyEnv(`${this.envPrefix}ACCESS_TOKEN`, this.ACCESS_TOKEN);
@@ -490,13 +491,15 @@ export default class Twitch {
                     this.eventsubWS = null;
                     this.logger(`Disconnected from Twitch EventSub - (token is refreshing)`, 'error');
                 }
-
-                this.connect();
-                await this.awaitConnection();
-
-                if (this.eventsubConnected) {
-                    this.logger("Connection re-established with Twitch EventSub", "success");
+                
+                if (this.ready) {   
+                    this.connect();
+                    await this.awaitConnection();
+                    if (this.eventsubConnected) {
+                        this.logger("Connection re-established with Twitch EventSub", "success");
+                    }
                 }
+
 
                 return res.data.expires_in;
             })
@@ -731,13 +734,13 @@ export default class Twitch {
         })
     }
 
-    public async sendMessage(message: string, reply?: string) {
+    public async sendMessage(message: string, replyToMessageId?: string) {
 
         return await axios.post(`https://api.twitch.tv/helix/chat/messages`, {
-              message: message,
+            message: message.trim(),
             broadcaster_id: this.CHANNEL.id,
             sender_id: this.SELF.id,
-            ...(reply ? {reply_parent_message_id: reply} : {})
+            ...(replyToMessageId ? {reply_parent_message_id: replyToMessageId} : {})
         }, {
             headers: {
                 'Client-Id': this.CLIENT_ID,

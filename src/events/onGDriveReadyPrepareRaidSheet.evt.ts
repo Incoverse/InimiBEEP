@@ -15,7 +15,7 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
+import IBEEPEvent, { EventInfo, TakesBroadcasterSender } from "@src/lib/base/IBEEPEvent.js";
 import { convertAllToID } from "@src/lib/misc.js";
 import { CronJob } from "cron";
 import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from "google-spreadsheet";
@@ -34,15 +34,12 @@ export default class OGDRPRS extends IBEEPEvent {
     private bannedRaidIDs: string[]
 
     public async exec(data?: {event: any}): Promise<void> {
-        global.logger("Preparing random raid sheet... " + global.additional.gDriveReady, "info")
         if (!global.additional.gDriveReady) {
             global.commChannel.once("gdrive:ready", async () => {
-                global.logger("GDrive is ready, preparing random raid sheet...", "info")
                 this.exec(data)
             })
             return
         }
-        global.logger("Running", "info")
 
         this.bannedRaidIDs = [
             global.broadcaster.SELF.id, //! Broadcaster
@@ -55,8 +52,6 @@ export default class OGDRPRS extends IBEEPEvent {
         global.additional.randomRaidSheet = this.sheet
         global.additional.randomRaidDoc = this.doc
         global.additional.randomRaidBannedIDs = this.bannedRaidIDs
-
-        global.logger(`Found ${(await this.sheet.getRows()).length} entries in the random raid sheet!`) 
 
         await this.doc.loadInfo(true);
         await convertAllToID()

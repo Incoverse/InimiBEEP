@@ -18,8 +18,8 @@
 import { config } from "dotenv";
 import * as http from "http";
 import cron, { CronTime } from "cron";
-import { modifyEnv } from "./utils.js";
 import axios from "axios";
+import { modifyEnv } from "@src/lib/misc.js";
 
 config();
 
@@ -375,10 +375,10 @@ export default class SpotifyClient {
     }
 
 
-    public async findTrack(query: string) {
-        return this.request.get(`/search?q=${encodeURIComponent(query)}&type=track`).catch(() => null).then((data) => {
+    public async findTrack(query: string, type: "track" | "album" | "artist" | "playlist" = "track") {
+        return this.request.get(`/search?q=${encodeURIComponent(query)}&type=${type}`).catch(() => null).then((data) => {
             if (!data) return null;
-            return data.tracks.items[0];
+            return data[type + "s"].items[0];
         })
     }
 

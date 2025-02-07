@@ -15,9 +15,8 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import Twitch from "@src/twitch.js";
+import Twitch from "@src/lib/third-party/twitch.js";
 import CacheManager from "../cacheManager.js";
-import { TwitchPermissions } from "../misc.js";
 
 declare const global: IBEEPGlobal;
 

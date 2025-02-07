@@ -59,6 +59,7 @@ export default class SworeCMD extends IBEEPCommand {
             }
             if (global.timers.noSwearing && global.timers.noSwearing.running) {
                 global.additional.pushups += pushupAdd;
+                this.pushupTracker += pushupAdd;
                 this.sender.sendMessage(`@${this.broadcaster.SELF.display_name} swore! (+${pushupAdd} pushup${pushupAdd==1?"":"s"})`, message.message_id);
             }
         }

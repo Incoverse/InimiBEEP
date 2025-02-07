@@ -16,12 +16,12 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
 export default class BroadcasterSayCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!(broadcaster-say|bsay)\s+(\w.*)$/;
+    public messageTrigger: RegExp = /^!(broadcaster-say|bsay)\s+(.+)$/;
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, [TwitchPermissions.Broadcaster, TwitchPermissions.Inimi])) {   

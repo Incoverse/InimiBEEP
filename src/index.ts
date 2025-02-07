@@ -16,7 +16,7 @@
  */
 
 import { fileURLToPath } from "url";
-import Twitch from "./twitch.js";
+import Twitch from "./lib/third-party/twitch.js";
 import path from "path";
 import fs from "fs";
 import IBEEPCommand from "./lib/base/IBEEPCommand.js";

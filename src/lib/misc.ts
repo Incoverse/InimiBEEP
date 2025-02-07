@@ -15,8 +15,10 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { ToWords } from "to-words";
 import { Message } from "./base/IBEEPCommand.js"
 import { exec } from "child_process";
+import { existsSync, writeFileSync, readFileSync } from "fs";
 
 declare const global: IBEEPGlobal;
 
@@ -141,7 +143,7 @@ export const conditionUtils = {
     },
     isLive: async (id?: string): Promise<boolean> => {
 
-      if (id) {
+      if (id && id !== global.broadcaster.SELF.id) {
         const streamUser = await global.sender.isStreaming(id);
         return streamUser;
       }
@@ -172,8 +174,6 @@ export function parameterize(CMD: string) {
 
 export async function runTerminalCommand(command: string) {
   return new Promise<string>((resolve, reject) => {
-    
-    console.log(`[CMD] Running command: ${command}`);
     exec(command, (error, stdout, stderr) => {
       if (error) {
         reject(error);
@@ -192,7 +192,11 @@ export async function runTerminalCommand(command: string) {
 
 export async function commandExists(command: string) {
   try {
-    await runTerminalCommand(`command -v ${command}`);
+    if (process.platform === "win32") {
+      await runTerminalCommand(`where ${command}`)
+    } else {
+      await runTerminalCommand(`command -v ${command}`);
+    }
     return true;
   } catch {
     return false;
@@ -306,10 +310,76 @@ export function parseDuration(durationStr) {
       'mo': 1000 * 60 * 60 * 24 * 31,
       'y': 365 * 24 * 60 * 60 * 1000
   };
-  
-  const time = parseInt(durationStr.replace(/[a-zA-Z]/g,""))
-  const unit = durationStr.match(/[a-zA-Z]/g).join("")  
 
-  const duration = time * units[unit];
-  return duration;
+  const parts = durationStr.match(/(\d+ms|\d+s|\d+m|\d+h|\d+d|\d+w|\d+mo|\d+y)/g);
+  let totalDuration = 0;
+
+  if (parts) {
+    for (const part of parts) {
+      const time = parseInt(part.replace(/[a-zA-Z]/g, ""));
+      const unit = part.match(/[a-zA-Z]+/g)[0];
+      totalDuration += time * units[unit];
+    }
+  }
+
+  return totalDuration;
+}
+
+export function chooseArticle(word: string | number): string {
+  if (typeof word === "number") {
+      word = new ToWords().convert(word)
+  }
+
+  const vowels = "aeiou";
+  word = word.toLowerCase();
+
+  if (vowels.includes(word[0])) {
+      return "an";
+  } else if (word[0] === 'h' && !word.startsWith("ho") && !word.startsWith("ha")) {
+      // Simple check for silent 'h' cases
+      return "an";
+  } else if (word[0] === 'x' && (word.startsWith("x-ray") || word.startsWith("xylophone"))) {
+      return "an";
+  } else {
+      return "a";
+  }
+}
+
+export function modifyEnv(key: string, value: string) {
+  const envPath = `${process.cwd()}/.env`;
+  if (!existsSync(envPath)) {
+      writeFileSync(envPath, `${key}=${value}\n`);
+  } else {
+      const env = readFileSync(envPath, 'utf8');
+      const lines = env.split('\n');
+      let found = false;
+      for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith(key)) {
+              lines[i] = `${key}=${value}`;
+              found = true;
+              break;
+          }
+      }
+      if (!found) {
+          lines.push(`${key}=${value}`);
+      }
+      writeFileSync(envPath, lines.join('\n'));
+  }
+}
+
+export function deleteEnv(key: string) {
+  const envPath = `${process.cwd()}/.env`;
+  if (!existsSync(envPath)) {
+      return;
+  } else {
+      const env = readFileSync(envPath, 'utf8');
+      const lines = env.split('\n');
+      for (let i = 0; i < lines.length; i++) {
+          if (lines[i].startsWith(key)) {
+              lines.splice(i, 1);
+              break;
+          }
+      }
+      writeFileSync(envPath, lines.join('\n'));
+  }
 }

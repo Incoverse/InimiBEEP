@@ -62,6 +62,9 @@ importers:
       pretty-ms:
         specifier: ^9.2.0
         version: 9.2.0
+      to-words:
+        specifier: ^4.2.0
+        version: 4.2.0
       typescript:
         specifier: ^5.5.4
         version: 5.7.2
@@ -687,6 +690,10 @@ packages:
   tmp@0.0.33:
     resolution: {integrity: sha512-jRCJlojKnZ3addtTOjdIqoRuPEKBvNXcGYqzO6zWZX8KfKEpnGY5jfggJQ3EjKuu8D4bJRr0y+cYJFmYbImXGw==}
     engines: {node: '>=0.6.0'}
+
+  to-words@4.2.0:
+    resolution: {integrity: sha512-KY2WEyu1ZVQ9h44Ac3w/E3i59ne873opFQZ8PXU3L7PWzsl8IjgQvSyogCqhCz+FFRCYEFJ1ERAeSB1Mu5sNjw==}
+    engines: {node: '>=12.0.0'}
 
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
@@ -1383,6 +1390,8 @@ snapshots:
   tmp@0.0.33:
     dependencies:
       os-tmpdir: 1.0.2
+
+  to-words@4.2.0: {}
 
   toidentifier@1.0.1: {}
 

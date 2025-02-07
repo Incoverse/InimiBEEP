@@ -15,11 +15,8 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Message } from "@src/lib/base/IBEEPCommand.js";
-import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
-import { readFileSync } from "fs";
-import chokidar, { FSWatcher } from "chokidar";
-import SpotifyClient from "@src/spotify.js";
+import IBEEPEvent, { EventInfo, TakesBroadcasterSender } from "@src/lib/base/IBEEPEvent.js";
+import SpotifyClient from "@src/lib/third-party/spotify.js";
 
 declare const global: IBEEPGlobal;
 

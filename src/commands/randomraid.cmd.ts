@@ -16,7 +16,7 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions, parameterize, convertAllToID } from "@src/lib/misc.js";
+import { orHigher, conditionUtils, TwitchPermissions, parameterize, convertAllToID, chooseArticle } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
@@ -29,6 +29,8 @@ export default class RandomRaidCMD extends IBEEPCommand {
                 await this.sender.sendMessage("I can't do a random raid when the stream is offline", message.message_id);
                 return
             }
+
+            await global.sender.sendMessage("Finding a suitable target for a raid...", message.message_id);
             
 
             const CMD = message.message.text.trim().split(" ").slice(1).join(" ");
@@ -80,11 +82,160 @@ export default class RandomRaidCMD extends IBEEPCommand {
                 "en": "English",
                 "sv": "Swedish"
             }
-    
-            await global.sender.sendMessage(`${message.message.text.startsWith("!randomraid-sp") ? `(${raidable.points}p) ` : ""}${raidable.user_name} is a good target for a raid! They're an ${langMap[raidable.language]} speaking channel, are playing ${raidable.game_name} and have ${raidable.viewer_count} viewers! ${global.contentFilter(raidable.socials)??""}`, message.message_id);
+
+
+            const showPoints = message.message.text.startsWith("!randomraid-sp")
+
+            const messageVariations = [
+                "Let's raid [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]! Show them some love!",
+                "We're heading over to [USER], who's streaming [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's hype up their chat!",
+                "We're raiding [USER], [a/an] [LANG] streamer currently playing [GAME] with [VIEWERS] viewer[s]. Let's make their day!",
+                "The bot has picked [USER] for our raid. They're enjoying [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's show our support!",
+                "It's raid time! We're joining [USER], who's live with [VIEWERS] viewer[s] playing [GAME] in [LANG].",
+                "We're raiding [USER] today! They're playing [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's bring the energy!",
+                "Let's make some noise for [USER], [a/an] [LANG] streamer enjoying [GAME] with [VIEWERS] viewer[s]. Join us!",
+                "Off we go to [USER], [a/an] [LANG] streamer live with [VIEWERS] viewer[s], playing [GAME]. Let's bring the hype!",
+                "We're taking a surprise trip to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make this raid special!",
+                "Time to join [USER], [a/an] [LANG] streamer currently enjoying [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Let's drop in on [USER], who's streaming [GAME] in [LANG] with [VIEWERS] viewer[s]. Say hello and bring the good vibes!",
+                "Next stop, [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's make their chat a party!",
+                "We're heading over to [USER], who's live playing [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's bring the fun!",
+                "Raid time! We're joining [USER], [a/an] [LANG] streamer enjoying [GAME] with [VIEWERS] viewer[s]. Say hi!",
+                "Let's show some support to [USER], who's playing [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's make it a great raid!",
+                "We're off to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] currently playing [GAME]. Let's say hello!",
+                "We're raiding [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Drop in and bring the good vibes!",
+                "The bot's selected [USER], who's live with [VIEWERS] viewer[s] playing [GAME] in [LANG]. Let's go join the fun!",
+                "Let's head to [USER], [a/an] [LANG] streamer currently playing [GAME] with [VIEWERS] viewer[s]. Show them some love!",
+                "We're on our way to [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's give them a warm welcome!",
+                "We're off to visit [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's make their day awesome!",
+                "Get ready, we're raiding [USER] next! They're streaming [GAME] with [VIEWERS] viewer[s]. Let's make some noise!",
+                "Let's join [USER] for a fun raid! They're playing [GAME] with [VIEWERS] viewer[s]. Drop in and say hi!",
+                "We're headed to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's give them a nice surprise!",
+                "It's time to raid [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Join the fun and show your support!",
+                "Time to raid! [USER] is live with [VIEWERS] viewer[s] playing [GAME]. Let's show them some love and hype!",
+                "We're off to see [USER], who's streaming [GAME] with [VIEWERS] viewer[s]. Let's make their day special!",
+                "The bot's picking [USER] as our raid target. They're playing [GAME] with [VIEWERS] viewer[s]. Let's go!",
+                "We're raiding [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's bring the fun to their stream!",
+                "Let's go raid [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Drop in and say hello!",
+                "Time for a raid! We're heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make this awesome!",
+                "We're about to raid [USER], who's streaming [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's make their chat pop!",
+                "Get ready to say hi to [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's show them some support!",
+                "Raid incoming! We're off to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's go say hello!",
+                "We're raiding [USER] today! They're playing [GAME] with [VIEWERS] viewer[s]. Let's make it an amazing raid!",
+                "Time to surprise [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's make their day unforgettable!",
+                "Let's go raid [USER], [a/an] [LANG] streamer live with [VIEWERS] viewer[s] playing [GAME]. Show them the love!",
+                "We're raiding [USER], who's streaming [GAME] with [VIEWERS] viewer[s]. Let's keep the good vibes flowing!",
+                "We're about to join [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's bring the hype!",
+                "The bot has chosen [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make their chat shine!",
+                "Let's head over to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Drop in and say hello!",
+                "We're raiding [USER], who's playing [GAME] in [LANG] with [VIEWERS] viewer[s]. Let's show them how we do it!",
+                "The bot has picked [USER] for our raid. Let's head over and give them a warm welcome as they play [GAME] with [VIEWERS] viewer[s]!",
+                "We're off to raid [USER], who's live playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "It's time for a raid! We're heading to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s].",
+                "Get ready to join the raid! We're heading to [USER], who's streaming [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Time to raid [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make this fun!",
+                "We're off to visit [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's give them a warm welcome!",
+                "We're on our way to [USER], [a/an] [LANG] streamer live with [VIEWERS] viewer[s] playing [GAME]. Let's make this raid special!",
+                "Let's raid [USER], [a/an] [LANG] streamer currently playing [GAME] with [VIEWERS] viewer[s]. Join us and spread the good vibes!",
+                "We're raiding [USER], who's streaming [GAME] with [VIEWERS] viewer[s]. Let's keep the energy up!",
+                "Let's give [USER] a raid they'll never forget! They're playing [GAME] with [VIEWERS] viewer[s]. Join us!",
+                "Time to raid! We're headed to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s]. Let's show them some love!",
+                "We're joining [USER], [a/an] [LANG] streamer currently playing [GAME] with [VIEWERS] viewer[s]. Let's bring the fun!",
+                "Get ready to raid [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make it epic!",
+                "It's time for a raid! We're heading over to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Join us!",
+                "Let's raid [USER], [a/an] [LANG] streamer enjoying [GAME] with [VIEWERS] viewer[s]. Let's show them how it's done!",
+                "We're raiding [USER], who's live playing [GAME] with [VIEWERS] viewer[s]. Let's spread some love!",
+                "Let's head to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's make this raid awesome!",
+                "We're raiding [USER], [a/an] [LANG] streamer enjoying [GAME] with [VIEWERS] viewer[s]. Let's join the fun!",
+                "We're off to raid [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's show them some raid love!",
+                "Let's go meet [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make this an unforgettable raid!",
+                "We're joining [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's give them a fun surprise!",
+                "We're raiding [USER] now! They're playing [GAME] with [VIEWERS] viewer[s]. Let's make it an awesome raid!",
+                "We're off to [USER], [a/an] [LANG] streamer enjoying [GAME] with [VIEWERS] viewer[s]. Let's make their chat pop!",
+                "We're taking over [USER]'s stream, playing [GAME] with [VIEWERS] viewer[s]. Let's give them a warm welcome!",
+                "Let's go hang out with [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Don't be shy, say hi!",
+                "The party's moving to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make them smile!",
+                "Ready to raid [USER]? They're playing [GAME] with [VIEWERS] viewer[s]. Let's make their chat lit!",
+                "Guess where we're going? To [USER] for some [GAME] fun with [VIEWERS] viewer[s]. Join the hype train!",
+                "The raid is on! [USER] is live with [VIEWERS] viewer[s] playing [GAME]. Let's surprise them!",
+                "Time for a raid! We're heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make them feel awesome!",
+                "Next stop: [USER]! They're live playing [GAME] with [VIEWERS] viewer[s]. Come spread the love!",
+                "We're raiding [USER] right now! They're playing [GAME] with [VIEWERS] viewer[s]. Let's show them some support!",
+                "It's time for a raid! Let's go say hello to [USER], who's playing [GAME] with [VIEWERS] viewer[s].",
+                "We're off to [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's go give them a friendly raid!",
+                "The bot's picking [USER] today! They're live with [VIEWERS] viewer[s] playing [GAME]. Let's give them a warm welcome!",
+                "We're raiding [USER] now! They're playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Who's ready for a raid? We're heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make their day!",
+                "Surprise raid! We're heading to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s]. Let's spread some positive vibes!",
+                "Let's go raid [USER]! They're live playing [GAME] with [VIEWERS] viewer[s]. Come say hello and spread some cheer!",
+                "Time to raid [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's bring the energy!",
+                "We're off to see [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Off to [USER] we go! They're playing [GAME] with [VIEWERS] viewer[s]. Let's make their chat pop!",
+                "We're raiding [USER] now! They're streaming [GAME] with [VIEWERS] viewer[s]. Let's show them some support!",
+                "We're headed to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make them feel awesome!",
+                "It's raid time! We're visiting [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's spread the love!",
+                "We're raiding [USER], who's live playing [GAME] with [VIEWERS] viewer[s]. Let's show them some raid love!",
+                "Ready to raid? We're off to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's bring the hype!",
+                "We're heading to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make them feel special!",
+                "Let's drop by [USER]'s stream! They're playing [GAME] with [VIEWERS] viewer[s]. Let's join the fun!",
+                "Time to visit [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's surprise them with a raid!",
+                "We're raiding [USER] right now! They're playing [GAME] with [VIEWERS] viewer[s]. Show them some love!",
+                "We're headed over to [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's spread some joy in their chat!",
+                "Raid time! Let's visit [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s]. Let's show them what we're made of!",
+                "We're off to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's bring the raid energy!",
+                "Let's join [USER] for some fun! They're playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "The raid is heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make their day amazing!",
+                "The bot has chosen [USER]! They're live with [VIEWERS] viewer[s] playing [GAME]. Let's make some noise!",
+                "We're on our way to [USER]! They're streaming [GAME] with [VIEWERS] viewer[s]. Let's give them a warm welcome!",
+                "Let's raid [USER] now! They're playing [GAME] with [VIEWERS] viewer[s]. Let's show them how it's done!",
+                "It's time to raid! We're heading to [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's make this epic!",
+                "Let's go support [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's bring the hype!",
+                "We're raiding [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's bring the fun to their chat!",
+                "The bot has picked [USER]! They're live with [VIEWERS] viewer[s] playing [GAME]. Let's make their chat shine!",
+                "We're heading to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's bring some joy!",
+                "Ready to raid? We're heading to [USER], who's streaming [GAME] with [VIEWERS] viewer[s]. Let's make them feel great!",
+                "We're off to raid [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's join the fun and make their day!",
+                "Time to raid! We're heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's spread some good vibes!",
+                "We're raiding [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's make them feel amazing!",
+                "Let's go visit [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "The raid is on! Let's head to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make this raid unforgettable!",
+                "We're joining [USER] for some fun! They're playing [GAME] with [VIEWERS] viewer[s]. Let's bring the party!",
+                "Time for a raid! We're heading to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's show them the love!",
+                "Let's go raid [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's make them feel amazing!",
+                "The raid is moving to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Let's go raid [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's make their stream pop!",
+                "We're raiding [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's bring the energy!",
+                "Let's join [USER] for a fun raid! They're playing [GAME] with [VIEWERS] viewer[s]. Let's spread some love!",
+                "The raid is going to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's make them feel awesome!",
+                "We're raiding [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make their day!",
+                "It's time to raid [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's show them some hype!",
+                "We're off to raid [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Time for a raid! We're heading to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's go say hi!",
+                "We're raiding [USER], who's live with [VIEWERS] viewer[s] playing [GAME]. Let's bring the energy!",
+                "We're heading to [USER], [a/an] [LANG] streamer playing [GAME] with [VIEWERS] viewer[s]. Let's make them smile!",
+                "Time to show some love to [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s]. Let's spread some good vibes!",
+                "The raid is going to [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's make their day!",
+                "We're raiding [USER], who's playing [GAME] with [VIEWERS] viewer[s]. Let's show them some love!",
+                "Let's go raid [USER]! They're playing [GAME] with [VIEWERS] viewer[s]. Let's bring the hype!",
+                "Let's show [USER] some love! They're playing [GAME] with [VIEWERS] viewer[s]. Drop in and say hi!",
+                "We're raiding [USER], [a/an] [LANG] streamer with [VIEWERS] viewer[s] playing [GAME]. Let's bring the fun!"
+              ]
+              
+            const messageVariation = messageVariations[Math.floor(Math.random() * messageVariations.length)]
+                .replace("[USER]", raidable.user_name)
+                .replace("[LANG]", langMap[raidable.language])
+                .replace("[GAME]", raidable.game_name)
+                .replace("[VIEWERS]", raidable.viewer_count)
+                .replace("[s]", raidable.viewer_count == 1 ? "" : "s")
+                .replace("[S]", raidable.viewer_count == 1 ? "" : "S")
+                .replace("[BC]", global.broadcaster.SELF.display_name)
+                .replace("[a/an]", chooseArticle(langMap[raidable.language]))
+
+
+            await global.sender.sendChatAnnouncement(`${showPoints ? `(${raidable.points}p) ` : ""}${messageVariation} ${global.contentFilter(raidable.socials)??""}`);
     
             setTimeout(async () => {
-                await this.broadcaster.raid(raidable.id);
+                await this.broadcaster.raid(raidable.user_id);
             }, 1000)
 
             global.commChannel.once("stream:offline", this.raidCompleted.bind(this));

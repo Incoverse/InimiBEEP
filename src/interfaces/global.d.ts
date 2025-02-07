@@ -14,8 +14,8 @@ interface IBEEPGlobal extends NodeJS.Global {
     
     commChannel: import("eventemitter2").EventEmitter2
     
-    sender: import("@src/twitch.ts").default;
-    broadcaster: import("@src/twitch.ts").default;
+    sender: import("@src/lib/third-party/twitch.ts").default;
+    broadcaster: import("@src/lib/third-party/twitch.ts").default;
 
     additional: {
         [key: string]: any
@@ -30,5 +30,5 @@ interface IBEEPGlobal extends NodeJS.Global {
         condition?: {[key:string]: string | number} | null
     }[];
 
-    spotify: import("@src/spotify.js").default;
+    spotify: import("@src/lib/third-party/spotify.ts").default;
 }

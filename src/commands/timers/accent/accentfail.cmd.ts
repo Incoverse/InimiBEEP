@@ -59,6 +59,7 @@ export default class AccentFailCMD extends IBEEPCommand {
             }
             if (global.timers.accent && global.timers.accent.running) {
                 global.additional.pushups += pushupAdd;
+                this.pushupTracker += pushupAdd;
                 this.sender.sendMessage(`@${this.broadcaster.SELF.display_name} failed to uphold the accent! (+${pushupAdd} pushup${pushupAdd==1?"":"s"})`, message.message_id);
             }
         }

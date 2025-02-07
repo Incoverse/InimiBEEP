@@ -17,7 +17,7 @@
 
 import { SpotifySettings } from "@src/events/onSetupSetupSpotify.evt.js";
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { conditionUtils } from "@src/lib/misc.js";
+import { chooseArticle, conditionUtils } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
@@ -58,20 +58,8 @@ export default class SpotifyPlayCMD extends IBEEPCommand {
                     }
                 }
                 return this.sender.sendMessage("Tracks are currently disabled.", message.message_id);
-            case "album":
-                if (global.additional.spotifySettings[SpotifySettings.ALBUMS_ENABLED]) {
-                    if (global.additional.spotifySettings[SpotifySettings.ONLY_QUEUE]) {
-                        await global.spotify.queue.add(track.uri);
-
-                        const queue = await global.spotify.get.queue();
-                        const length = queue.queue.length;
-                        return this.sender.sendMessage("Your album has been added to the queue.", message.message_id);
-                    } else {
-                        await global.spotify.playback.play(track.uri);
-                        return this.sender.sendMessage("Playing album: " + track.name + " by " + track.artists.map(a => a.name).join(", "), message.message_id);
-                    }
-                }
-                return this.sender.sendMessage("Albums are currently disabled.", message.message_id);
+            default:
+                return this.sender.sendMessage(`Only tracks are supported at the moment, you provided ${chooseArticle(track.type)} ${track.type}.`, message.message_id);
         }
 
 

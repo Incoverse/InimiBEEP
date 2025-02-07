@@ -16,7 +16,6 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
@@ -24,9 +23,7 @@ export default class PingCMD extends IBEEPCommand {
     public messageTrigger: RegExp = /^!ping$/;
 
     public async exec(message: Message): Promise<any> {
-        if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {   
-            await this.sender.sendMessage(`Pong! I am connected to the chat!`, message.message_id);
-        }
+        await this.sender.sendMessage(`Pong! I'm alive and well!`, message.message_id);
     }
 
 }

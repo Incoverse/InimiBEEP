@@ -16,7 +16,7 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 

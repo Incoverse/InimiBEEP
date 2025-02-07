@@ -59,6 +59,7 @@ export default class LaughedCMD extends IBEEPCommand {
             }
             if (global.timers.noLaughing && global.timers.noLaughing.running) {
                 global.additional.pushups += pushupAdd;
+                this.pushupTracker += pushupAdd;
                 this.sender.sendMessage(`@${this.broadcaster.SELF.display_name} laughed! (+${pushupAdd} pushup${pushupAdd==1?"":"s"})`, message.message_id);
             }
         }

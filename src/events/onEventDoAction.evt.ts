@@ -15,7 +15,6 @@
   * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Message } from "@src/lib/base/IBEEPCommand.js";
 import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
 import { readFileSync } from "fs";
 import chokidar, { FSWatcher } from "chokidar";
