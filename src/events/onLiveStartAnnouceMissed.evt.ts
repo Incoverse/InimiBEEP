@@ -69,9 +69,28 @@ export default class OLSAM extends IBEEPEvent {
                     }
 
                     global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
+                } else if (recap.type === "newfollowers") {
+                    const listWithAnd = recap.data.map((x: any) => `@${x.name}`).join(", ").replace(/, ([^,]*)$/, ', and $1');
+                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} followed while you were offline! Resulting in a final pushup count of ${global.additional.pushups}. Welcome to the community ${listWithAnd}!`;
+
+                    // if message is longer than 500 characters, split it into multiple messages on the space before the 500th character
+                    let remainingMessage = message;
+
+                    while (remainingMessage.length > 500) {
+                        const splitIndex = remainingMessage.slice(0, 500).lastIndexOf(" ");
+                        const partMessage = remainingMessage.slice(0, splitIndex);
+                        remainingMessage = remainingMessage.slice(splitIndex + 1);
+
+                        await this.sender.sendChatAnnouncement(partMessage, "orange");
+                    }
+
+                    if (remainingMessage.length > 0) {
+                        await this.sender.sendChatAnnouncement(remainingMessage, "orange");
+                    }
+
+                    global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
                 }
             }
         }
     }
-
 }

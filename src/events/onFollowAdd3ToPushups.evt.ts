@@ -48,9 +48,33 @@ export default class OFA3TP extends IBEEPEvent {
 
         global.additional.pushups += pushupsToAdd;
 
-        if (await conditionUtils.isLive()) {   
+        if (!(await conditionUtils.isLive())) {
+
+            const exists = global.additional.missedRecap.find((x: any) => x.type === "newfollowers");
+
+            if (exists) {
+                exists.data.push({
+                    id: data.event.user_id,
+                    login: data.event.user_login,
+                    name: data.event.user_name,
+                })
+                return;
+            } else {
+                global.additional.missedRecap.push({
+                    type: "newfollowers",
+                    data: [{
+                        id: data.event.user_id,
+                        login: data.event.user_login,
+                        name: data.event.user_name,
+                    }]
+                })
+            }
+
+            return;
+        } else {
             await this.sender.sendChatAnnouncement(`Thank you @${data.event.user_name} for the follow! ${pushupsToAdd} pushup${pushupsToAdd as any == 1?"":"s"} have been added to the total count, resulting in ${global.additional.pushups} total pushup${global.additional.pushups == 1 ?"":"s"}!`, "orange");
         }
+
     }
     
 }
