@@ -27,8 +27,13 @@ export default class ShutdownCMD extends IBEEPCommand {
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, [TwitchPermissions.Broadcaster, TwitchPermissions.Inimi])) {   
-            await this.sender.sendMessage("Shutting down...", message.message_id);
-            runTerminalCommand('sudo systemctl stop InimiBEEP')
+            const isSystemd: boolean = !!(process.env.INVOCATION_ID?.trim());
+            if (isSystemd) {
+                await this.sender.sendMessage("Shutting down...", message.message_id);
+                runTerminalCommand('sudo systemctl stop InimiBEEP')
+            } else {
+                await this.sender.sendMessage("InimiBEEP was not started as a service please manually perform this action.", message.message_id);
+            }
         }
 
     }

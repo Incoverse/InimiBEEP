@@ -27,8 +27,13 @@ export default class RestartCMD extends IBEEPCommand {
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Moderator))) {   
-            await this.sender.sendMessage("Restarting...", message.message_id);
-            runTerminalCommand('sudo systemctl restart InimiBEEP')
+            const isSystemd: boolean = !!(process.env.INVOCATION_ID?.trim());
+            if (isSystemd) {
+                await this.sender.sendMessage("Restarting...", message.message_id);
+                runTerminalCommand('sudo systemctl restart InimiBEEP')
+            } else {
+                await this.sender.sendMessage("InimiBEEP was not started as a service please manually perform this action.", message.message_id);
+            }
         }
 
     }
