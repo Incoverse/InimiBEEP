@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "rm -rf dist || del /f /s /q dist",
     "build": "npm run clean && tsc && npx resolve-tspaths",
+    "build-start": "npm run build && npm run start",
     "start": "node --no-warnings dist/index",
     "rewrite": "node --no-warnings dist/index",
     "authenticate": "node --no-warnings dist/authenticate"
