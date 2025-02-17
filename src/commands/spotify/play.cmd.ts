@@ -48,13 +48,10 @@ export default class SpotifyPlayCMD extends IBEEPCommand {
                 if (global.additional.spotifySettings[SpotifySettings.TRACKS_ENABLED]) {
                     if (global.additional.spotifySettings[SpotifySettings.ONLY_QUEUE]) {
                         await global.spotify.queue.add(track.uri);
-
-                        const queue = await global.spotify.get.queue();
-                        const length = queue.queue.length;
-                        return this.sender.sendMessage("Your track has been added to the queue.", message.message_id);
+                        return this.sender.sendMessage(`'${track.name}' by ${track.artists.map(a => a.name).join(", ")}. Queued!`, message.message_id);
                     } else {
                         await global.spotify.playback.play(track.uri);
-                        return this.sender.sendMessage("Playing track: " + track.name + " by " + track.artists.map(a => a.name).join(", "), message.message_id);
+                        return this.sender.sendMessage(`Playing: '${track.name}' by ${track.artists.map(a => a.name).join(", ")}`, message.message_id);
                     }
                 }
                 return this.sender.sendMessage("Tracks are currently disabled.", message.message_id);

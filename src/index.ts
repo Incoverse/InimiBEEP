@@ -47,9 +47,9 @@ declare const global: IBEEPGlobal;
 //! Constants
 
 global.helpers = [
-    "150481513", // thegoodguy544
-    "192061104", // jesseeasy
-    "196868918", // ghanamanman
+    "436911937", // SoulThread2597
+    "157618298", // drhoobs404
+    "204282051"  // lllowie
 ]
 
 global.commands = [];

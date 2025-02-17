@@ -21,7 +21,7 @@ import { conditionUtils } from "@src/lib/misc.js";
 declare const global: IBEEPGlobal;
 
 export default class UnlurkCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!unlurk$/;
+    public messageTrigger: RegExp = /^!unlurk/;
 
     public async setup(): Promise<boolean | null> {
         if (!global.additional.lurkedUsers) global.additional.lurkedUsers = [];

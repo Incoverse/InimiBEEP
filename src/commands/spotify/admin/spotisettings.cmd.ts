@@ -21,7 +21,7 @@ declare const global: IBEEPGlobal;
 
 
 export default class SpotifySettingsCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!(ssettings|spotisettings|spotifysettings|ss)\s+([\w-_]+)\s+([\w-_]+)$/;
+    public messageTrigger: RegExp = /^!(spotifysettings|ss)\s+([\w-_]+)\s+([\w-_]+)$/;
 
 
     public async exec(message: Message): Promise<any> {
