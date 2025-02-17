@@ -40,7 +40,8 @@ export default class RandomRaidCMD extends IBEEPCommand {
             
             const source = obj?.source?.toLowerCase() ?? "all" // all, list, random
     
-            const type = obj?.type?.toLowerCase() ?? "top"
+            const type = obj?.type?.toLowerCase() ?? "top" 
+            const test = obj?.test ?? false
             
             //! random
             const size = parseInt(obj?.randomSize ?? "10")
@@ -231,15 +232,19 @@ export default class RandomRaidCMD extends IBEEPCommand {
                 .replace("[BC]", global.broadcaster.SELF.display_name)
                 .replace("[a/an]", chooseArticle(langMap[raidable.language]))
 
-
-            await global.sender.sendChatAnnouncement(`${showPoints ? `(${raidable.points}p) ` : ""}${messageVariation} ${global.contentFilter(raidable.socials)??""}`);
-    
-            setTimeout(async () => {
-                await this.broadcaster.raid(raidable.user_id);
-            }, 1000)
-
-            global.commChannel.once("stream:offline", this.raidCompleted.bind(this));
-
+            if (!test) {
+                
+                await global.sender.sendChatAnnouncement(`${showPoints ? `(${raidable.points}p) ` : ""}${messageVariation} ${global.contentFilter(raidable.socials)??""}`);
+                
+                setTimeout(async () => {
+                    await this.broadcaster.raid(raidable.user_id);
+                }, 1000)
+            
+                global.commChannel.once("stream.offline", this.raidCompleted.bind(this));
+            } else {
+                await this.sender.sendMessage(`With ${raidable.points} point(s), ${raidable.user_name} was picked!`)
+            }
+            
 
             
             

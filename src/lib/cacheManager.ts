@@ -17,15 +17,15 @@
 
 export default class CacheManager {
 
-    private cache: Map<string, { expires: Date, value: any }>;
+    private cache: Map<string, { expires: Date | null, value: any }>;
 
-    constructor(cache: Map<string, { expires: Date, value: any }> = new Map()) {
+    constructor(cache: Map<string, { expires: Date | null, value: any }> = new Map()) {
         this.cache = cache;
     }
 
     get(key: string) {
         if (!this.cache.has(key)) return null;
-        if (this.cache.get(key).expires.getTime() < Date.now()) {
+        if (this.cache.get(key).expires && this.cache.get(key).expires.getTime() < Date.now()) {
             this.cache.delete(key);
             return null;
         }
@@ -36,7 +36,7 @@ export default class CacheManager {
         const entry = this.cache.get(key)
         if (!entry) return false
 
-        if (entry.expires.getTime() < Date.now()) {
+        if (entry.expires && entry.expires.getTime() < Date.now()) {
             this.cache.delete(key)
             return false
         }
@@ -56,7 +56,7 @@ export default class CacheManager {
         const entires = this.cache.entries()
 
         for (const [key, value] of entires) {
-            if (value.expires.getTime() < Date.now()) {
+            if (value.expires && value.expires.getTime() < Date.now()) {
                 this.cache.delete(key)
             }
         }
@@ -71,7 +71,7 @@ export default class CacheManager {
 
     forEach(callbackfn: (value: any, key: any) => void): void {
         this.cache.forEach((value, key) => {
-            if (value.expires.getTime() < Date.now()) {
+            if (value.expires && value.expires.getTime() < Date.now()) {
                 this.cache.delete(key)
                 return
             }
@@ -84,7 +84,7 @@ export default class CacheManager {
         const keys = this.cache.keys()
 
         for (const key of keys) {
-            if (this.cache.get(key).expires.getTime() < Date.now()) {
+            if (this.cache.get(key).expires && this.cache.get(key).expires.getTime() < Date.now()) {
                 this.cache.delete(key)
             }
         }
@@ -92,8 +92,8 @@ export default class CacheManager {
         return keys
     }
 
-    set(key: any, value: any, expires: number | Date): this {
-        this.cache.set(key, { value, expires: expires instanceof Date ? expires : new Date(Date.now() + expires) })
+    set(key: any, value: any, expires: number | Date | null): this {
+        this.cache.set(key, { value, expires: expires instanceof Date ? expires : expires == null ? null : new Date(Date.now() + expires) })
         return this
     }
 

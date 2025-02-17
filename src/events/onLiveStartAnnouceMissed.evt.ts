@@ -61,11 +61,11 @@ export default class OLSAM extends IBEEPEvent {
                         const partMessage = remainingMessage.slice(0, splitIndex);
                         remainingMessage = remainingMessage.slice(splitIndex + 1);
 
-                        await this.sender.sendChatAnnouncement(partMessage, "orange");
+                        await this.sender.sendMessage(partMessage);
                     }
 
                     if (remainingMessage.length > 0) {
-                        await this.sender.sendChatAnnouncement(remainingMessage, "orange");
+                        await this.sender.sendMessage(remainingMessage);
                     }
 
                     global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
@@ -81,11 +81,11 @@ export default class OLSAM extends IBEEPEvent {
                         const partMessage = remainingMessage.slice(0, splitIndex);
                         remainingMessage = remainingMessage.slice(splitIndex + 1);
 
-                        await this.sender.sendChatAnnouncement(partMessage, "orange");
+                        await this.sender.sendMessage(partMessage);
                     }
 
                     if (remainingMessage.length > 0) {
-                        await this.sender.sendChatAnnouncement(remainingMessage, "orange");
+                        await this.sender.sendMessage(remainingMessage);
                     }
 
                     global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);

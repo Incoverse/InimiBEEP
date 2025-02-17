@@ -215,7 +215,7 @@ export async function convertAllToID() {
       
       if (processedIDs.includes(id.toLowerCase())) {
           global.logger(`Duplicate entry for ${username.toLowerCase()} (${id.toLowerCase()})!`, "warn", "RNDRAID");
-          const row = rows.find(row => row.rowNumber == entryIndex+2);
+          const row = rows.find((row: { rowNumber: number; }) => row.rowNumber == entryIndex+2);
           await row.delete();
           rows = await global.additional.randomRaidSheet.getRows();
           subBias++;
@@ -229,7 +229,7 @@ export async function convertAllToID() {
 
       if (global.additional.randomRaidBannedIDs.includes(id.toLowerCase())) {
           global.logger(`Banned ID detected for ${username.toLowerCase()} (${id.toLowerCase()})!`, "warn", "RNDRAID");
-          const row = rows.find(row => row.rowNumber == entryIndex+2);
+          const row = rows.find((row: { rowNumber: number; }) => row.rowNumber == entryIndex+2);
           await row.delete();
           rows = await global.additional.randomRaidSheet.getRows();
           subBias++;
@@ -239,7 +239,7 @@ export async function convertAllToID() {
       const user = await global.sender.getUser(username.toLowerCase());
       if (!user) {
           global.logger(`Couldn't find user with username ${username.toLowerCase()}!`, "warn", "RNDRAID");
-          const row = rows.find(row => row.rowNumber == entryIndex+2);
+          const row = rows.find((row: { rowNumber: number; }) => row.rowNumber == entryIndex+2);
           await row.delete();
           rows = await global.additional.randomRaidSheet.getRows();
           subBias++;
@@ -248,7 +248,7 @@ export async function convertAllToID() {
 
       if (global.additional.randomRaidBannedIDs.includes(user.id.toLowerCase())) {
           global.logger(`Banned ID detected for ${username.toLowerCase()} (${user.id.toLowerCase()})!`, "warn", "RNDRAID");
-          const row = rows.find(row => row.rowNumber == entryIndex+2);
+          const row = rows.find((row: { rowNumber: number; }) => row.rowNumber == entryIndex+2);
           await row.delete();
           rows = await global.additional.randomRaidSheet.getRows();
           subBias++;
@@ -257,7 +257,7 @@ export async function convertAllToID() {
 
       if (processedIDs.includes(user.id.toString().toLowerCase())) {
           global.logger(`Duplicate entry for ${username.toLowerCase()} (${id.toLowerCase()})!`, "warn", "RNDRAID");
-          const row = rows.find(row => row.rowNumber == entryIndex+2);
+          const row = rows.find((row: { rowNumber: number; }) => row.rowNumber == entryIndex+2);
           await row.delete();
           rows = await global.additional.randomRaidSheet.getRows();
           subBias++;
@@ -273,7 +273,7 @@ export async function convertAllToID() {
 
 }
 
-export function formatDuration(durationMs, full=false) {
+export function formatDuration(durationMs: any, full=false) {
   const units = [
       { label: (full ? " year(s)" : 'y'), ms: 1000 * 60 * 60 * 24 * 365 },
       { label: (full ? " month)s)" : 'mo'), ms: 1000 * 60 * 60 * 24 * 31},
@@ -299,7 +299,7 @@ export function formatDuration(durationMs, full=false) {
   return durationStr.trim();
 }
 
-export function parseDuration(durationStr) {
+export function parseDuration(durationStr: string) {
   const units = {
       'ms': 1,
       's': 1000,
@@ -382,4 +382,19 @@ export function deleteEnv(key: string) {
       }
       writeFileSync(envPath, lines.join('\n'));
   }
+}
+
+export function deepAssign(target: { [x: string]: any; }, source: { [x: string]: any; }) {
+  for (const key in source) {
+      if (source[key] instanceof Object) {
+          if (!target[key]) {
+              target[key] = {};
+          }
+          deepAssign(target[key], source[key]);
+      } else {
+          target[key] = source[key];
+      }
+  }
+
+  return target;
 }
