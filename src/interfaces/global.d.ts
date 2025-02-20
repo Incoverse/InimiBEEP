@@ -5,6 +5,11 @@ interface IBEEPGlobal extends NodeJS.Global {
     commands: import("@src/lib/base/IBEEPCommand.js").default[];
     events: import("@src/lib/base/IBEEPEvent.js").default[];
     redemptionTriggers: import("@src/lib/base/IBEEPRedemptionTrigger.js").default[];
+    
+    redis: {
+        pub: import("ioredis").Redis;
+        sub: import("ioredis").Redis;
+    };
 
     config: IBEEPConfig;
     

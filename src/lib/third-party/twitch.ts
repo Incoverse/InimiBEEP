@@ -624,7 +624,9 @@ export default class Twitch {
                 'Client-Id': this.CLIENT_ID,
                 'Authorization': `Bearer ${this.ACCESS_TOKEN}`
             }
-        });
+        }).then((res) => {
+            return res.data.data[0];
+        })
     }
 
     public async deleteReward(id: string) {

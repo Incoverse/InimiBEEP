@@ -35,6 +35,7 @@ import {
     englishDataset,
     TextCensor
 } from "obscenity"
+import Redis from "ioredis";
 const matcher = new RegExpMatcher({
     ...englishDataset.build(),
     ...englishRecommendedTransformers,
@@ -55,6 +56,12 @@ global.helpers = [
 global.commands = [];
 global.events = [];
 global.redemptionTriggers = [];
+
+global.redis = {
+    pub: new Redis.default(process.env.REDIS_URI),
+    sub: new Redis.default(process.env.REDIS_URI),
+}
+
 
 global.contentFilter = (message: string) => {
     if (!message) return null
