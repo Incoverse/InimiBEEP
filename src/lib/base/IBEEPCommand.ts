@@ -17,12 +17,16 @@
 
 import Twitch from "@src/lib/third-party/twitch.js";
 import CacheManager from "../cacheManager.js";
+import CooldownSystem from "../cooldown.js";
 
 declare const global: IBEEPGlobal;
 
 export default abstract class IBEEPCommand {
     protected broadcaster: Twitch;
     protected sender: Twitch;
+
+
+    public cooldown: CooldownSystem;
 
     protected cache: CacheManager = new CacheManager();
 
