@@ -352,7 +352,10 @@ export default class SpotifyClient {
         repeat: this.setRepeatMode.bind(this) as typeof this.setRepeatMode,
         shuffle: this.setShuffleMode.bind(this) as typeof this.setShuffleMode,
         volume: this.setVolume.bind(this) as typeof this.setVolume,
-        find: this.findTrack.bind(this) as typeof this.findTrack
+        find: this.findTrack.bind(this) as typeof this.findTrack,
+        save: this.saveSong.bind(this) as typeof this.saveSong,
+        unsave: this.unsaveSong.bind(this) as typeof this.unsaveSong,
+        isSaved: this.isSaved.bind(this) as typeof this.isSaved
     }
     public get = {
         playable: {
@@ -374,6 +377,69 @@ export default class SpotifyClient {
         add: this.addToQueue.bind(this) as typeof this.addToQueue,
     }
 
+
+    public async isSaved(id?: string) {
+        if (!id) {
+            const playback = await this.getPlayback();
+            if (!playback) return false;
+
+            if (playback.item.type !== "track") {
+                console.log("Not a track");
+                return false;
+            }
+
+            id = playback.item.id;
+        }
+
+        return this.request.get(`/me/tracks/contains?ids=${id}`).then((data) => data[0]).catch(e=>{
+            console.log(e.response.data)
+            return false
+        })
+    }
+
+    public async saveSong(id?: string) {
+
+
+        if (!id) {
+            const playback = await this.getPlayback();
+            if (!playback) return false;
+
+            if (playback.item.type !== "track") {
+                console.log("Not a track");
+                return false;
+            }
+
+            id = playback.item.id;
+        }
+
+
+        return this.request.put(`/me/tracks?ids=${id}`, ).catch(e=>{
+            console.log(e.response.data)
+            return false
+        })
+    }
+
+    public async unsaveSong(id?: string) {
+
+
+        if (!id) {
+            const playback = await this.getPlayback();
+            if (!playback) return false;
+
+            if (playback.item.type !== "track") {
+                console.log("Not a track");
+                return false;
+            }
+
+            id = playback.item.id;
+        }
+
+
+        return this.request.delete(`/me/tracks?ids=${id}`).catch(e=>{
+            console.log(e.response.data)
+            return false
+        })
+    }
 
     public async findTrack(query: string, type: "track" | "album" | "artist" | "playlist" = "track") {
         return this.request.get(`/search?q=${encodeURIComponent(query)}&type=${type}`).catch(() => null).then((data) => {
@@ -597,7 +663,8 @@ export default class SpotifyClient {
 
         const response = await axios.put(`https://api.spotify.com/v1/${endpoint}`, data, {
             headers: {
-                Authorization: `Bearer ${this.credentials.access_token}`
+                Authorization: `Bearer ${this.credentials.access_token}`,
+                ...(data && { "Content-Type": "application/json" })
             }
         });
 
@@ -610,7 +677,7 @@ export default class SpotifyClient {
 
         const response = await axios.delete(`https://api.spotify.com/v1/${endpoint}`, {
             headers: {
-                Authorization: `Bearer ${this.credentials.access_token}`
+                Authorization: `Bearer ${this.credentials.access_token}`,
             }
         });
 
