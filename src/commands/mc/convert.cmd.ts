@@ -30,7 +30,7 @@ export default class ConvertCMD extends IBEEPCommand {
         global.additional.activeConversionRedemptions = [];
 
 
-        const allConversionRedemptions: any[] = (await this.broadcaster.getRewards()).filter(reward => reward.title.includes("points to Minecraft currency"));
+        const allConversionRedemptions: any[] = (await this.broadcaster.getRewards()).filter(reward => reward.title.includes("points to Minecraft currency") || reward.title.includes("points to MC currency"));
 
         await Promise.all([...allConversionRedemptions.map(async reward => {
            return this.broadcaster.deleteReward(reward.id);
@@ -78,7 +78,7 @@ export default class ConvertCMD extends IBEEPCommand {
                     } else {
 
                         const rewardId = await this.broadcaster.createReward({
-                            title: `[${message.chatter_user_name}] ${amount} points to Minecraft currency`,
+                            title: `[${message.chatter_user_name}] ${amount} points to Minecraft currency`.length > 45 ? `[${message.chatter_user_name.slice(0,8)}] ${amount} points to MC currency` : `[${message.chatter_user_name}] ${amount} points to Minecraft currency`,
                             cost: parseInt(amount),
                             prompt: `Convert ${amount} channel points to in-game money in DrVem's Community Centre. This redeem is only functional for ${message.chatter_user_name}.`
                         }).then(reward => reward.id);

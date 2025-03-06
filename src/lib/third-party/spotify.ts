@@ -140,7 +140,11 @@ export default class SpotifyClient {
             this.cronJob.stop();
         }
 
-        this.cronJob = new cron.CronJob(new Date(Date.now() + this.credentials.expires_in), async () => {
+        if (Date.now() + this.credentials.expires_in < Date.now() + 60000) {
+            await this.refreshAccessToken();
+        }
+
+        this.cronJob = new cron.CronJob(new Date(Date.now() + this.credentials.expires_in - 60000), async () => {
             global.logger("Refreshing access token for Spotify","debug");
             await this.refreshAccessToken();
             global.logger("Successfully refreshed access token for Spotify","debug");
