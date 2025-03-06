@@ -1113,6 +1113,34 @@ export default class Twitch {
         });
     }
 
+    public async getStreamMarkers(vid: string,settings:{all?:boolean}={all: false}) {
+        const q = !!vid ? `video_id=${vid}` : `user_id=${this.CHANNEL.id}`;
+
+        return await axios.get(`https://api.twitch.tv/helix/streams/markers?${q}&first=100`, {
+            headers: {
+                "Authorization": `Bearer ${this.ACCESS_TOKEN}`,
+                "Client-Id": this.CLIENT_ID
+            }
+        }).then(async (res) => {
+            let data = res.data.data;
+            if (settings.all) {
+                let cursor = res.data.pagination.cursor;
+                while (cursor) {
+                    await axios.get(`https://api.twitch.tv/helix/streams/markers?${q}&first=100&after=${cursor}`, {
+                        headers: {
+                            "Authorization": `Bearer ${this.ACCESS_TOKEN}`,
+                            "Client-Id": this.CLIENT_ID
+                        }
+                    }).then((res) => {
+                        data = data.concat(res.data.data);
+                        cursor = res?.data?.pagination?.cursor;
+                    });
+                }
+            }
+            return data;
+        })
+    }
+
     public async getStreamInfo(id: string|string[], settings:{all?:boolean}={all: false}) {
             
             return await axios.get(`https://api.twitch.tv/helix/streams?user_id=${id instanceof Array ? id.join('&user_id=') : id}&first=100`, {
