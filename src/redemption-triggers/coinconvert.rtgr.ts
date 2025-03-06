@@ -22,7 +22,7 @@ declare const global: IBEEPGlobal;
 
 export default class ConvertRTGR extends IBEEPRedemptionTrigger {
 
-    public redemptionTrigger: RegExp | ((event: RedeemableInfo) => Promise<boolean>) = /points to Minecraft currency$/;
+    public redemptionTrigger: RegExp | ((event: RedeemableInfo) => Promise<boolean>) = /points to (Minecraft|MC) currency$/;
 
 
     public async setup(): Promise<boolean | null> {
