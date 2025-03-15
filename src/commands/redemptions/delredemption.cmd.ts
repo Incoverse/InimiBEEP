@@ -21,7 +21,7 @@ import { conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 declare const global: IBEEPGlobal;
 
 export default class DelRedemptionCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!delredemption\s+([\w-]+)$/;
+    public messageTrigger: RegExp = /^!delredemption\s+(.+)$/;
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, [TwitchPermissions.Broadcaster, TwitchPermissions.Inimi])) {   
