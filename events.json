@@ -4,5 +4,17 @@
         "do": "message",
         "as": "sender",
         "message": "Thanks for following, {{name}}! We are now at {{followers}} followers!"
+    },
+    {
+        "on": "ad",
+        "do": "announcement",
+        "as": "sender",
+        "message": "A {{duration-long}} ad is starting! Thank you for sticking with us through this break! Advertisements help support my content. Consider subscribing to remove ads and support the stream!"
+    },
+    {
+        "on": "ad-end",
+        "do": "announcement",
+        "as": "sender",
+        "message": "The ad is over! Thank you for your patience!"
     }
 ]
