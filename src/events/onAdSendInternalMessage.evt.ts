@@ -63,7 +63,7 @@ export default class OASIM extends IBEEPEvent {
                     duration: data.event.duration_seconds,
                     manual: !data.event.is_automatic,
                 })
-            }, data.event.duration * 1000)
+            }, data.event.duration_seconds * 1000)
         })
 
     }
