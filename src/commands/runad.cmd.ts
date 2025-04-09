@@ -16,7 +16,7 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions, parseDuration } from "@src/lib/misc.js";
+import { orHigher, conditionUtils, TwitchPermissions, parseDuration, formatDuration } from "@src/lib/misc.js";
 import prettyMilliseconds from "pretty-ms";
 
 declare const global: IBEEPGlobal;
@@ -42,7 +42,7 @@ export default class RunAdCMD extends IBEEPCommand {
             }
     
             await this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
-            await this.sender.sendMessage(`Running a ${prettyMilliseconds(secondsLength * 1000).split(" ").map(a=>a.replace(/s$/, "")).join(" ")} ad`, message.message_id);
+            await this.sender.sendMessage(`Running a ${formatDuration(secondsLength*1000, true)} ad break!`, message.message_id);
         }
     }
 

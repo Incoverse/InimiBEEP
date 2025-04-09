@@ -118,7 +118,7 @@ export default class OEDA extends IBEEPEvent {
                 return message;
             })
         })
-        global.commChannel.on("ad:start", async (data) => {
+        global.commChannel.on("ad.start", async (data) => {
             await this.handleEvent("ad", async (message) => {
                 if (message.includes("{{duration-long}}")) {
                     message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true));
@@ -129,7 +129,7 @@ export default class OEDA extends IBEEPEvent {
                 return message;
             })
         })
-        global.commChannel.on("ad:end", async (data) => {
+        global.commChannel.on("ad.end", async (data) => {
             await this.handleEvent("ad-end", async (message) => {
                 if (message.includes("{{duration-long}}")) {
                     message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true));
