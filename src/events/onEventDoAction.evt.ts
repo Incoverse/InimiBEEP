@@ -123,7 +123,7 @@ export default class OEDA extends IBEEPEvent {
                 if (message.includes("{{duration-long}}")) {
                     message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true).replace(/s$/, ""));
                 } else if (message.includes("{{duration}}")) {
-                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000).replace(/s$/, ""));
+                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000));
                 }
         
                 return message;
@@ -134,7 +134,7 @@ export default class OEDA extends IBEEPEvent {
                 if (message.includes("{{duration-long}}")) {
                     message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true).replace(/s$/, ""));
                 } else if (message.includes("{{duration}}")) {
-                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000).replace(/s$/, ""));
+                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000));
                 }
         
                 return message;
