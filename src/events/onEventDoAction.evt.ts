@@ -18,12 +18,13 @@
 import IBEEPEvent, { EventInfo, TakesBroadcasterSender, TwitchEventInfo } from "@src/lib/base/IBEEPEvent.js";
 import { readFileSync } from "fs";
 import chokidar, { FSWatcher } from "chokidar";
+import { formatDuration } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
 let events: {
-    on: "follow",
-    do: "message" | "eval",
+    on: "follow" | "ad" | "ad-end",
+    do: "message" | "eval" | "announcement"
     as: "sender" | "broadcaster",
     message?: string,
     eval?: string
@@ -57,7 +58,7 @@ export default class OEDA extends IBEEPEvent {
                         "moderator_user_id": sender?.SELF?.id
                     }
                 }
-            }
+            },
         ];
     }
 
@@ -117,6 +118,29 @@ export default class OEDA extends IBEEPEvent {
                 return message;
             })
         })
+        global.commChannel.on("ad:start", async (data) => {
+            await this.handleEvent("ad", async (message) => {
+                if (message.includes("{{duration-long}}")) {
+                    message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true));
+                } else if (message.includes("{{duration}}")) {
+                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000));
+                }
+        
+                return message;
+            })
+        })
+        global.commChannel.on("ad:end", async (data) => {
+            await this.handleEvent("ad-end", async (message) => {
+                if (message.includes("{{duration-long}}")) {
+                    message = message.replace(/{{duration-long}}/g, formatDuration(data.duration * 1000, true));
+                } else if (message.includes("{{duration}}")) {
+                    message = message.replace(/{{duration}}/g, formatDuration(data.duration * 1000));
+                }
+        
+                return message;
+            })
+        })
+
     }
 
     private async handleEvent(type: string, parseVariables: (message:string)=>Promise<string>) {
@@ -128,6 +152,10 @@ export default class OEDA extends IBEEPEvent {
                     const msg = await parseVariables(event.message);
                     this.broadcaster.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
                     this.broadcaster.sendMessage(msg);
+                } else if (event.do === "announcement") {
+                    const msg = await parseVariables(event.message);
+                    this.broadcaster.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
+                    this.broadcaster.sendChatAnnouncement(msg);
                 } else if (event.do === "eval") {
                     this.broadcaster.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${event.eval}`, "info");
                     eval(event.eval);
@@ -137,6 +165,10 @@ export default class OEDA extends IBEEPEvent {
                     const msg = await parseVariables(event.message);
                     this.sender.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
                     this.sender.sendMessage(msg);
+                } else if (event.do === "announcement") {
+                    const msg = await parseVariables(event.message);
+                    this.sender.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
+                    this.sender.sendChatAnnouncement(msg);
                 } else if (event.do === "eval") {
                     this.sender.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${event.eval}`, "info");
                     eval(event.eval);
