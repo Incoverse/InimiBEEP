@@ -36,7 +36,7 @@ export default class OEDA extends IBEEPEvent {
                     name: "channel.ad_break.begin",
                     version: 1,
                     condition: {
-                        "broadcaster_id": broadcaster?.SELF?.id,
+                        "broadcaster_user_id": broadcaster?.SELF?.id,
                     }
                 }
             },
