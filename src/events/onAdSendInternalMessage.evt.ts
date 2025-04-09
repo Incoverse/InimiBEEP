@@ -21,7 +21,7 @@ import chokidar, { FSWatcher } from "chokidar";
 
 declare const global: IBEEPGlobal;
 
-export default class OEDA extends IBEEPEvent {
+export default class OASIM extends IBEEPEvent {
     public eventTrigger: (params: TakesBroadcasterSender) => EventInfo = ({broadcaster, sender}) => ({
         type: "InimiBEEP:start",
         priority: 0
@@ -53,14 +53,14 @@ export default class OEDA extends IBEEPEvent {
 
     public async exec(): Promise<void> {
         global.broadcaster.events.on("channel.ad_break.begin", async (data) => {
-            global.commChannel.emit("ad:start", {
-                duration: data.event.duration,
+            global.commChannel.emit("ad.start", {
+                duration: data.event.duration_seconds,
                 manual: !data.event.is_automatic,
             })
 
             setTimeout(() => {
-                global.commChannel.emit("ad:end", {
-                    duration: data.event.duration,
+                global.commChannel.emit("ad.end", {
+                    duration: data.event.duration_seconds,
                     manual: !data.event.is_automatic,
                 })
             }, data.event.duration * 1000)
