@@ -42,7 +42,7 @@ export default class RunAdCMD extends IBEEPCommand {
             }
     
             await this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
-            await this.sender.sendMessage(`Running a ${formatDuration(secondsLength*1000, true)} ad break!`, message.message_id);
+            await this.sender.sendMessage(`Running a ${formatDuration(secondsLength*1000, true).replace(/s$/, "")} ad break!`, message.message_id);
         }
     }
 
