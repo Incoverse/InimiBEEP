@@ -54,7 +54,7 @@ export default class PraiseCMD extends IBEEPCommand {
 
 
                 const resp = await this.ollama.chat({
-                    model: "llama3.2",
+                    model: "gemma3:12b",
                     messages: [
                         {
                             role: "user",
