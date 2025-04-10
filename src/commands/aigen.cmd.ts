@@ -28,7 +28,7 @@ declare const global: IBEEPGlobal;
 const sysMessage = { role: "system", content: `
 
   [CONTEXT]
-  You are running the llama3.2 model in Ollama.
+  You are running the deepseek-r1 model in Ollama.
 
   You are a Twitch bot known as "InimiBEEP".
   Your creator is "Inimi", commonly also known as "Inimized", and "InimicalPart".
@@ -277,7 +277,7 @@ export default class AIGenCMD extends IBEEPCommand {
 
         while (!done) {
           response = await this.ollama.chat({
-            model: 'llama3.2',
+            model: 'deepseek-r1:14b',
             messages: msgs,
             // tools: allowTools ? [
             //   tools.sendWhisper,
