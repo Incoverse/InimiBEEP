@@ -33,16 +33,20 @@ export default class RunAdCMD extends IBEEPCommand {
             
             const length = message.message.text.match(this.messageTrigger)[1];
 
-            const secondsLength = isNaN(parseInt(length)) ? Math.round(parseDuration(length)/1000) : parseInt(length);
+            const secondsLength = /^[0-9]*$/.test(length) ? Math.round(parseDuration(length)/1000) : parseInt(length);
             
 
             if (![30,60,90,120,150,180].includes(secondsLength)) {
                 await this.sender.sendMessage("Please provide a valid ad duration (30s, 1m, 1m30s, 2m, 2m30s, 3m)", message.message_id);
                 return
             }
-    
-            await this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
-            await this.sender.sendMessage(`Running a ${formatDuration(secondsLength*1000, true).replace(/s$/, "")} ad break!`, message.message_id);
+
+            try { 
+                await this.broadcaster.runCommercial(secondsLength as 30 | 60 | 90 | 120 | 150 | 180);
+                await this.sender.sendMessage(`Running a ${formatDuration(secondsLength*1000, true).replace(/s((?=$)|(?=\s))/gi, "")} ad break!`, message.message_id);
+            } catch (e) {
+                await this.sender.sendMessage(`I can't run an ad right now. Please try again later.`, message.message_id);
+            }
         }
     }
 

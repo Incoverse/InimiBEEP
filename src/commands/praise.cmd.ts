@@ -23,7 +23,7 @@ import { Ollama } from "ollama";
 declare const global: IBEEPGlobal;
 
 export default class PraiseCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!praise$/;
+    public messageTrigger: RegExp = /^!praise(\s*(.*)|)$/;
 
     private ollama: Ollama
 
@@ -41,6 +41,8 @@ export default class PraiseCMD extends IBEEPCommand {
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, TwitchPermissions.Everyone)) {   
 
+            let name = message.message.text.match(this.messageTrigger)?.[2] || "Inimi";
+         
             let sentence = "";
             let attempt = 0;
             let maxTries = 5;
@@ -48,17 +50,17 @@ export default class PraiseCMD extends IBEEPCommand {
             while (!sentence.trim()) {
                 attempt++
                 if (attempt > maxTries) {
-                    sentence = "Inimi is such a great person that I was unable to come up with a sentence that could describe him. He is just that amazing!";
+                    sentence = name + " is such a great person that I was unable to come up with a sentence that could describe them. They are just that amazing!";
                     break;
                 }
 
 
                 const resp = await this.ollama.chat({
-                    model: "llama3.2",
+                    model: "gemma3:12b",
                     messages: [
                         {
                             role: "user",
-                            content: "Your job is to provide single sentences that praise a person known by their alias 'Inimi', They are a high-end programmer, and a moderator of the Twitch stream that this AI is currently running in. The streamer's name is 'DrVem'. Inimi is the person that has created you, and your name is InimiBEEP. Please provide me with a sentence that praises Inimi, your creator. You don't necessarily have to point out his coding skills and InimiBEEP, it can just be a general praise if you prefer it like that"
+                            content: name.toLowerCase() == "inimi" ? "Your job is to provide single sentences that praise a person known by their alias 'Inimi', They are a high-end programmer, and a moderator of the Twitch stream that this AI is currently running in. The streamer's name is 'DrVem'. Inimi is the person that has created you, and your name is InimiBEEP. Please provide me with a sentence that praises Inimi, your creator. You don't necessarily have to point out his coding skills and InimiBEEP, it can just be a general praise if you prefer it like that" : "Your job is to provide single sentences that praise a person known by their alias '"+name+"'. Please provide me with a sentence that praises '"+name+"'."
                         } 
                     ],
                     format: {
