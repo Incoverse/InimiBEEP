@@ -50,7 +50,7 @@ export default class PraiseCMD extends IBEEPCommand {
             while (!sentence.trim()) {
                 attempt++
                 if (attempt > maxTries) {
-                    sentence = name + " is such a great person that I was unable to come up with a sentence that could describe him. He is just that amazing!";
+                    sentence = name + " is such a great person that I was unable to come up with a sentence that could describe them. They are just that amazing!";
                     break;
                 }
 
