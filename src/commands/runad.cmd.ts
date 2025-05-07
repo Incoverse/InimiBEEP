@@ -33,7 +33,7 @@ export default class RunAdCMD extends IBEEPCommand {
             
             const length = message.message.text.match(this.messageTrigger)[1];
 
-            const secondsLength = /^[0-9]*$/.test(length) ? Math.round(parseDuration(length)/1000) : parseInt(length);
+            const secondsLength = /^[0-9]*$/.test(length) ? parseInt(length) : Math.round(parseDuration(length)/1000);
             
 
             if (![30,60,90,120,150,180].includes(secondsLength)) {
