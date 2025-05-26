@@ -39,11 +39,14 @@ export default class OMPCMD extends IBEEPEvent {
         if (!data) return;
         for (const command of global.commands) {
             if (command.messageTrigger instanceof RegExp && command.messageTrigger.test(data.event.message.text)) {
-                console.log("Command triggered:", command.constructor.name, data.event.message.text);
+                global.logger(`Command triggered: ${command.constructor.name} - ${data.event.message.text}`, "info", "CMD");
                 command.exec(data.event);
             } else if (typeof command.messageTrigger === "function") {
                 command.messageTrigger(data.event).then((result) => {
-                    if (result) command.exec(data.event);
+                    if (result) {
+                        global.logger(`Command triggered: ${command.constructor.name} - ${data.event.message.text}`, "info", "CMD");
+                        command.exec(data.event);
+                    }
                 })
             }
         }
