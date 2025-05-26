@@ -268,6 +268,8 @@ export default class AIGenCMD extends IBEEPCommand {
 
         let response: ChatResponse;
 
+
+        global.logger(`Prompting AI with: "${prompt}" by @${username}`, "info", "AIGenCMD");
         while (!done) {
           response = await this.ollama.chat({
             model: 'gemma3:12b',
@@ -298,8 +300,8 @@ export default class AIGenCMD extends IBEEPCommand {
               if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push({ role: "tool", content: toolResp.response.toString()});
             }
             
+            global.logger(`Rerunning AI with the tool responses - ${toolResponses.map(tool => tool.name).join(", ")}`, "info", "AIGenCMD");
           } else {
-            console.log(msgs)
             done = true;
           }
           
@@ -310,7 +312,7 @@ export default class AIGenCMD extends IBEEPCommand {
         }
 
 
-        console.log(response.message);
+        global.logger(`AI responded to @${username} with: "${response.message.content}"`, "info", "AIGenCMD");
 
         if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push(response.message);
         msgs.push(response.message);
