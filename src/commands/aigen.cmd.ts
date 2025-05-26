@@ -46,6 +46,7 @@ You must only reply to the message content in [INCOMING-MESSAGE]. Do not include
 - Sender's name
 - Following status (true/false)
 - Highest permission level
+- Which message and user the user replied to (if applicable)
 
 [RESPONSE RULES]
 - You are InimiBEEP. Never claim to be Inimi, Inimized, or InimicalPart.
@@ -85,6 +86,22 @@ Hello, InimiBEEP! How are you doing today?
 
 [EXAMPLE RESPONSE]
 I'm doing great, thanks for asking! Let me know what you need.
+
+[EXAMPLE INPUT]
+[PREFIX]
+Sender's ID: 123456789
+Sender's name: IAmATwitchUser
+Sender is following DrVem: true
+Sender's highest permission: Moderator
+Replied to you saying: "Here is a basic math equation for you: 19 + 16 = ?"
+[/PREFIX]
+
+[INCOMING-MESSAGE]
+35!
+[/INCOMING-MESSAGE]
+
+[EXAMPLE RESPONSE]
+That's correct! 19 + 16 equals 35. Great job!
 `.trim()}
 
 /*
@@ -153,10 +170,38 @@ const tools = {
 
 }
 
+const AiGenCommand = /^!aigen\s*(.*)/
+const BeepPing = /^@inimibeep\s*(.*)/i
+const HeyBeepCommand = /^hey inimibeep,\s*(.*)/i
+
+function getPrompt(event: ChatMessage): string {
+
+  if (AiGenCommand.test(event.message.text)) {
+    return event.message.text.match(AiGenCommand)[1];
+  } else if (HeyBeepCommand.test(event.message.text)) {
+    return event.message.text.match(HeyBeepCommand)[1];
+  } else if (BeepPing.test(event.message.text)) {
+    return event.message.text.match(BeepPing)[1];
+  } else if (event.reply?.parent_user_id == global.sender.SELF.id) {
+    return event.message.text.replace(/^@inimibeep\s*/i, "").trim();
+  } 
+}
 
 export default class AIGenCMD extends IBEEPCommand {
     private ollama: Ollama;
-    public messageTrigger: RegExp = /^!aigen\s*(.*)/;
+    public messageTrigger: ((event: ChatMessage) => Promise<boolean>) = async (event: ChatMessage) => {
+      if (AiGenCommand.test(event.message.text)) {
+        return true;
+      } else if (HeyBeepCommand.test(event.message.text)) {
+        return true;
+      } else if (BeepPing.test(event.message.text)) {
+        return true;
+      } else if (event.reply?.parent_user_id == global.sender.SELF.id) {
+        return true;
+      }
+      return false;
+    }
+    // public messageTrigger: RegExp = /^!aigen\s*(.*)/;
 
 
     public setup(): Promise<boolean | null> {
@@ -183,7 +228,12 @@ export default class AIGenCMD extends IBEEPCommand {
         }
 
    
-        let prompt = message.message.text.match(this.messageTrigger)[1];
+        let prompt = getPrompt(message);
+
+        if (!prompt) {
+          await this.sender.sendMessage("Please provide a prompt for the AI to respond to.", message.message_id);
+          return;
+        }
 
         if (!instances[message.chatter_user_id]) {
           instances[message.chatter_user_id] = {
@@ -207,11 +257,11 @@ export default class AIGenCMD extends IBEEPCommand {
         const isFollowing = await this.broadcaster.isFollower(message.chatter_user_id);
         const permissionLevel = conditionUtils.getHighestPermission(message, true);
 
-        const content = `[PREFIX]\nSender's ID: ${message.chatter_user_id}\nSender's name: ${username}\nSender is following DrVem: ${isFollowing}\nSender's highest permission: ${permissionLevel}\n[/PREFIX]\n\n[INCOMING-MESSAGE]\n${prompt}\n[/INCOMING-MESSAGE]`;
+        const content = `[PREFIX]\nSender's ID: ${message.chatter_user_id}\nSender's name: ${username}\nSender is following DrVem: ${isFollowing}\nSender's highest permission: ${permissionLevel}${message.reply ? `\nReplied to ${message.reply.parent_user_id == global.sender.SELF.id ? "you" : "@" + message.reply.parent_user_name} saying: ${message.message.text}` : ``}\n[/PREFIX]\n\n[INCOMING-MESSAGE]\n${prompt}\n[/INCOMING-MESSAGE]`;
 
         if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push({ role: "user", content });
 
-        const msgs: typeof instances[0]["history"] = instances[message.chatter_user_id].enabled ? [...instances[message.chatter_user_id].history] : [sysMessage, { role: "user", content }];
+        const msgs: typeof instances[0]["history"] = instances[message.chatter_user_id].enabled  ? [...instances[message.chatter_user_id].history] : [sysMessage, { role: "user", content }];
 
         let done = false;
         let allowTools = true;
