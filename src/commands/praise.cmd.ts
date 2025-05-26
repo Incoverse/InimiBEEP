@@ -41,7 +41,7 @@ export default class PraiseCMD extends IBEEPCommand {
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, TwitchPermissions.Everyone)) {   
 
-            let name = message.message.text.match(this.messageTrigger)?.[2] || "Inimi";
+            let name = message.message.text.match(this.messageTrigger)?.[2].replace(/^@/,"") || "Inimi";
          
             let sentence = "";
             let attempt = 0;
@@ -50,17 +50,18 @@ export default class PraiseCMD extends IBEEPCommand {
             while (!sentence.trim()) {
                 attempt++
                 if (attempt > maxTries) {
+                    global.logger(`Failed to generate a praise sentence for ${name} after ${maxTries} attempts`, "error", "PraiseCMD");
                     sentence = name + " is such a great person that I was unable to come up with a sentence that could describe them. They are just that amazing!";
                     break;
                 }
 
-
+                global.logger(`Attempting to generate a praise sentence for ${name} (${attempt}/${maxTries})`, "info", "PraiseCMD");
                 const resp = await this.ollama.chat({
                     model: "gemma3:12b",
                     messages: [
                         {
                             role: "user",
-                            content: name.toLowerCase() == "inimi" ? "Your job is to provide single sentences that praise a person known by their alias 'Inimi', They are a high-end programmer, and a moderator of the Twitch stream that this AI is currently running in. The streamer's name is 'DrVem'. Inimi is the person that has created you, and your name is InimiBEEP. Please provide me with a sentence that praises Inimi, your creator. You don't necessarily have to point out his coding skills and InimiBEEP, it can just be a general praise if you prefer it like that" : "Your job is to provide single sentences that praise a person known by their alias '"+name+"'. Please provide me with a sentence that praises '"+name+"'."
+                            content: name.toLowerCase() == "inimi" ? "Your job is to provide single sentences that praise a person known by their alias 'Inimi', They are a high-end programmer, and a moderator of the Twitch stream that this AI is currently running in. The streamer's name is 'DrVem'. Inimi is the person that has created you, and your name is InimiBEEP. Please provide me with a sentence that praises Inimi, your creator. You don't necessarily have to point out his coding skills and InimiBEEP, it can just be a general praise if you prefer it like that" : "Your job is to provide single sentences that praise a person known by their alias '"+name+"'. Please provide me with a sentence that praises '"+name+"'. You may be as creative as you want, but the sentence must be a single sentence that praises the person. You can use their name in the sentence, but it is not required. The sentence should be positive and uplifting."
                         } 
                     ],
                     format: {
@@ -78,6 +79,7 @@ export default class PraiseCMD extends IBEEPCommand {
             }
 
 
+            global.logger(`Generated praise sentence for ${name}: ${sentence}`, "info", "PraiseCMD");
             await this.sender.sendMessage(sentence, message.message_id);
             
         }
