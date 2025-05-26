@@ -36,6 +36,7 @@ export default class OMCL extends IBEEPEvent {
     })
 
     public setup(): Promise<boolean | null> {
+        global.additional.lurkedUsers = [];
         global.commChannel.on("stream.offline", () => {
             if (global.additional.lurkedUsers.length) {
                 global.logger(`Lurkers have been cleared, ${global.additional.lurkedUsers.length} lurkers were removed.`, "info", "Lurker");
