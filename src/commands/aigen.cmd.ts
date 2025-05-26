@@ -257,7 +257,7 @@ export default class AIGenCMD extends IBEEPCommand {
         const isFollowing = await this.broadcaster.isFollower(message.chatter_user_id);
         const permissionLevel = conditionUtils.getHighestPermission(message, true);
 
-        const content = `[PREFIX]\nSender's ID: ${message.chatter_user_id}\nSender's name: ${username}\nSender is following DrVem: ${isFollowing}\nSender's highest permission: ${permissionLevel}${message.reply ? `\nReplied to ${message.reply.parent_user_id == global.sender.SELF.id ? "you" : "@" + message.reply.parent_user_name} saying: ${message.message.text}` : ``}\n[/PREFIX]\n\n[INCOMING-MESSAGE]\n${prompt}\n[/INCOMING-MESSAGE]`;
+        const content = `[PREFIX]\nSender's ID: ${message.chatter_user_id}\nSender's name: ${username}\nSender is following DrVem: ${isFollowing}\nSender's highest permission: ${permissionLevel}${message.reply ? `\nReplied to ${message.reply.parent_user_id == global.sender.SELF.id ? "you" : "@" + message.reply.parent_user_name} saying: ${message.reply.parent_message_body.replace(/^@.*?\s/,"")}` : ``}\n[/PREFIX]\n\n[INCOMING-MESSAGE]\n${prompt}\n[/INCOMING-MESSAGE]`;
 
         if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push({ role: "user", content });
 
