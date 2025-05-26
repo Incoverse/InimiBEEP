@@ -60,8 +60,19 @@ export default class TimerCheckCMD extends IBEEPCommand {
             let minutesLeft = Math.ceil((global.timers.BDLG.nextDate().toJSDate().getTime() - Date.now()) / 60000); 
             msg += `BDLG (${minutesLeft} minute${minutesLeft == 1 ? "" : "s"} left), `;
         }
+
+        if (global.timers.custom && global.timers.custom.running) {
+            let minutesLeft = Math.ceil((global.timers.custom.nextDate().toJSDate().getTime() - Date.now()) / 60000); 
+            msg += `Custom (${minutesLeft} minute${minutesLeft == 1 ? "" : "s"} left), `;
+        }
+
+        if (msg === "Timers: ") {
+            msg = "No timers are currently running.";
+        } else {
+            msg = msg.slice(0, -2) + ".";
+        }
         
-        await this.sender.sendMessage(msg.slice(0, -2), message.message_id);
+        await this.sender.sendMessage(msg, message.message_id);
     }
 
 }

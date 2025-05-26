@@ -38,7 +38,7 @@ export default class SpotifySongCMD extends IBEEPCommand {
 
             artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
 
-            return this.sender.sendMessage(`Currently playing: ${song} by ${artists}`, message.message_id);
+            return this.sender.sendMessage(`Currently playing: ${global.contentFilter(song)} by ${global.contentFilter(artists)}`, message.message_id);
         } else {
             return this.sender.sendMessage(`No song is currently playing.`, message.message_id);
         }

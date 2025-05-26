@@ -18,7 +18,7 @@
 
     
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
-import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
+import { orHigher, conditionUtils, TwitchPermissions, formatDuration, parseDuration } from "@src/lib/misc.js";
 import { CronJob, CronTime } from "cron";
     
 declare const global: IBEEPGlobal;
@@ -43,6 +43,8 @@ export default class SwedishOnlyCMD extends IBEEPCommand {
             const secondParameter = message.message.text.match(this.messageTrigger)[1];
 
             let minutes = global.config.timerLengths.swedishOnly
+            let millisecondsLength = null;
+            let length = null
 
             if (secondParameter && !isNaN(parseInt(secondParameter))) {
                 minutes = parseInt(secondParameter);
@@ -58,52 +60,54 @@ export default class SwedishOnlyCMD extends IBEEPCommand {
                             global.commChannel.emit("swedish-only:finish");
                             return await this.sender.sendMessage(`Timer has been stopped!`, message.message_id);
                         }
-                        return await this.sender.sendMessage(`There is no Swedish only timer running!`, message.message_id);
+                        return await this.sender.sendMessage(`There is no SWEDISH ONLY timer running!`, message.message_id);
                     case "abort":
                         if (global.timers.swedishOnly && global.timers.swedishOnly.running) {
                             global.timers.swedishOnly.stop();
                             global.additional.swedishOnly = false;
                             global.timers.swedishOnly = null;
                             global.commChannel.emit("swedish-only:abort");
-                            return await this.sender.sendMessage(`The Swedish only timer has been aborted!`, message.message_id);
+                            return await this.sender.sendMessage(`The SWEDISH ONLY timer has been aborted!`, message.message_id);
                         }
-                        return await this.sender.sendMessage(`There is no Swedish only timer running!`, message.message_id);
+                        return await this.sender.sendMessage(`There is no SWEDISH ONLY timer running!`, message.message_id);
                     case "extend":
-                        const thirdParameter = message.message.text.match(this.messageTrigger)[2];
+                            if (!global.timers.swedishOnly || !global.timers.swedishOnly.running) {
+                                return await this.sender.sendMessage(`There is no SWEDISH ONLY timer running!`, message.message_id);
+                            }
+                            length = message.message.text.match(this.messageTrigger)[2];
+                            millisecondsLength = /^[0-9]*$/.test(length) ? parseInt(length)*1000 : Math.round(parseDuration(length));
 
-                        if (!global.timers.swedishOnly || !global.timers.swedishOnly.running) {
-                            return await this.sender.sendMessage(`There is no Swedish only timer running!`, message.message_id);
-                        }
+                            if (!millisecondsLength) {
+                                return await this.sender.sendMessage(`Please provide a valid time (5s, 3m, 9h30m, etc.)`, message.message_id);
+                            }
 
-                        if (!thirdParameter || isNaN(parseInt(thirdParameter))) {
-                            return await this.sender.sendMessage(`I don't understand that third parameter.`, message.message_id);
-                        }
-
-                        minutes = parseInt(thirdParameter);
-
-                        global.timers.swedishOnly.setTime(
-                            new CronTime(new Date(global.timers.swedishOnly.nextDate().toJSDate().getTime() + (minutes*60*1000) - Date.now()))
-                        )
+                            global.timers.swedishOnly.setTime(
+                                new CronTime(new Date(global.timers.swedishOnly.nextDate().toJSDate().getTime() + (millisecondsLength) - Date.now()))
+                            )
+                        const prettyLength = formatDuration(millisecondsLength, true);
         
-                        global.commChannel.emit("swedish-only:extend", minutes);
-                        await this.sender.sendMessage(`The Swedish only timer has been extended by ${minutes} minute${minutes == 1 ? "" : "s"}!`, message.message_id);
+                        global.commChannel.emit("swedish-only:extend", millisecondsLength);
+                        await this.sender.sendMessage(`The SWEDISH ONLY timer has been extended by ${prettyLength}!`, message.message_id);
                         break;
                     case "set":
-                        const thirdParameter2 = message.message.text.match(this.messageTrigger)[2];
+                        length = message.message.text.match(this.messageTrigger)[2];
+                        millisecondsLength = /^[0-9]*$/.test(length) ? parseInt(length)*1000 : Math.round(parseDuration(length));
 
-                        if (!thirdParameter2 || isNaN(parseInt(thirdParameter2))) {
-                            return await this.sender.sendMessage(`I don't understand that third parameter.`, message.message_id);
+                        if (!millisecondsLength) {
+                            return await this.sender.sendMessage(`Please provide a valid time (5s, 3m, 9h30m, etc.)`, message.message_id);
                         }
 
                         if (global.timers.swedishOnly && global.timers.swedishOnly.running) {
                             global.timers.swedishOnly.setTime(
-                                new CronTime(new Date(Date.now() + parseInt(thirdParameter2)*60*1000))
+                                new CronTime(new Date(Date.now() + millisecondsLength))
                             )
 
-                            global.commChannel.emit("swedish-only:time-set", parseInt(thirdParameter2));
-                            return await this.sender.sendMessage(`The Swedish only timer has been set to ${thirdParameter2} minute${parseInt(thirdParameter2) == 1 ? "" : "s"}!`, message.message_id);
+                            const prettyLength = formatDuration(millisecondsLength);
+
+                            global.commChannel.emit("swedish-only:time-set", millisecondsLength);
+                            return await this.sender.sendMessage(`The SWEDISH ONLY timer has been set to ${prettyLength} minute${parseInt(length) == 1 ? "" : "s"}!`, message.message_id);
                         } else {
-                            minutes = parseInt(thirdParameter2);
+                            minutes = parseInt(length);
                         }
                         break;
                     default:
@@ -130,7 +134,7 @@ export default class SwedishOnlyCMD extends IBEEPCommand {
             
             global.timers.swedishOnly.start();
             global.commChannel.emit("swedish-only:start", minutes);
-            await this.sender.sendMessage(`A Swedish only timer has been started! (${minutes} minute${minutes == 1 ? "" : "s"})`, message.message_id);
+            await this.sender.sendMessage(`A SWEDISH ONLY timer has been started! (${minutes} minute${minutes == 1 ? "" : "s"})`, message.message_id);
             
         }
     }

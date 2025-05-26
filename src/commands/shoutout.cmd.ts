@@ -19,7 +19,7 @@ import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
 import { orHigher, conditionUtils, TwitchPermissions } from "@src/lib/misc.js";
 
 export default class ShoutoutCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!so\s+([\w@]+)$/;
+    public messageTrigger: RegExp = /^!so\s+(.+)$/;
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {
@@ -40,9 +40,9 @@ export default class ShoutoutCMD extends IBEEPCommand {
                 return await this.sender.sendMessage(`I couldn't find a user with the name "${username}"`, message.message_id);
             }
             
-            const colors = ["purple" , "blue"]
+            const colors = ["purple", "blue"]
             
-            await this.sender.sendChatAnnouncement(`Go check out ${username} at https://twitch.tv/${username}!`, colors[Math.floor(Math.random() * colors.length)] as "purple" | "blue");
+            await this.sender.sendChatAnnouncement(`Go check out ${user.display_name} at https://twitch.tv/${user.login}!`, colors[Math.floor(Math.random() * colors.length)] as "purple" | "blue");
             await this.sender.shoutout(user.id);
         }
     }

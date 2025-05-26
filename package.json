@@ -8,7 +8,6 @@
     "build-start": "npm run build && npm run start",
     "build-start-sysd": "npm run build && npm run start-sysd",
     "start": "node --no-warnings dist/index",
-    "start-sysd": "INVOCATION_ID=$IID node --no-warnings dist/index",
     "rewrite": "node --no-warnings dist/index",
     "authenticate": "node --no-warnings dist/authenticate"
   },

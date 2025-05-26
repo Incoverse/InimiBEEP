@@ -24,6 +24,7 @@ export default class DiscordCMD extends IBEEPCommand {
 
     public async exec(message: Message): Promise<any> {
         await this.sender.sendMessage(`Hey, join our Discord! It's full of sillyness and laughs! ${global.config.discordInvite}`);
+        
     }
 
 }

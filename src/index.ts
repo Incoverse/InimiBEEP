@@ -33,7 +33,10 @@ import {
     RegExpMatcher,
     englishRecommendedTransformers,
     englishDataset,
-    TextCensor
+    TextCensor,
+    keepStartCensorStrategy,
+    keepEndCensorStrategy,
+    asteriskCensorStrategy
 } from "obscenity"
 import Redis from "ioredis";
 const matcher = new RegExpMatcher({
@@ -63,11 +66,11 @@ global.redis = {
 }
 
 
+const censor = new TextCensor();
+censor.setStrategy(keepStartCensorStrategy(keepEndCensorStrategy(asteriskCensorStrategy())));
+
 global.contentFilter = (message: string) => {
     if (!message) return null
-
-    const censor = new TextCensor();
-
     const matches = matcher.getAllMatches(message);
 
     return censor.applyTo(message, matches)

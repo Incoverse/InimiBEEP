@@ -40,13 +40,18 @@ export default class SpotifyPlaySearchCMD extends IBEEPCommand {
             if (global.additional.spotifySettings[SpotifySettings.ONLY_QUEUE]) {
                 await global.spotify.queue.add(track.uri);
 
-                const queue = await global.spotify.get.queue();
-                const length = queue.queue.length;
+                let artists = track.artists.map(a => global.contentFilter(a.name)).join(", ");
+                artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
 
-                return this.sender.sendMessage("'" + track.name + "' by " + track.artists.map(a => a.name).join(", ") + " has been added to the queue.", message.message_id);
+
+                return this.sender.sendMessage("'" + global.contentFilter(track.name) + "' by " + artists + " has been added to the queue.", message.message_id);
             } else {
                 await global.spotify.playback.play(track.uri);
-                return this.sender.sendMessage("Playing track: " + track.name + " by " + track.artists.map(a => a.name).join(", "), message.message_id);
+
+                let artists = track.artists.map(a => global.contentFilter(a.name)).join(", ");
+                artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
+
+                return this.sender.sendMessage("Playing track: " + global.contentFilter(track.name) + " by " + artists, message.message_id);
             }
         }
         return this.sender.sendMessage("Tracks are currently disabled.", message.message_id);
