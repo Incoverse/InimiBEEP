@@ -40,7 +40,7 @@ export default class SpotifyPlaySearchCMD extends IBEEPCommand {
             if (global.additional.spotifySettings[SpotifySettings.ONLY_QUEUE]) {
                 await global.spotify.queue.add(track.uri);
 
-                let artists = track.artists.map(a => global.contentFilter(a.name)).join(", ");
+                let artists = track.artists.map(a => global.contentFilter(a.name));
                 artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
 
 
@@ -48,7 +48,7 @@ export default class SpotifyPlaySearchCMD extends IBEEPCommand {
             } else {
                 await global.spotify.playback.play(track.uri);
 
-                let artists = track.artists.map(a => global.contentFilter(a.name)).join(", ");
+                let artists = track.artists.map(a => global.contentFilter(a.name));
                 artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
 
                 return this.sender.sendMessage("Playing track: " + global.contentFilter(track.name) + " by " + artists, message.message_id);
