@@ -97,10 +97,10 @@ export default class NoLaughingCMD extends IBEEPCommand {
                                 new CronTime(new Date(Date.now() + millisecondsLength))
                             )
 
-                            const prettyLength = formatDuration(millisecondsLength);
+                            const prettyLength = formatDuration(millisecondsLength, true);
 
                             global.commChannel.emit("no-laughing:time-set", millisecondsLength);
-                            return await this.sender.sendMessage(`The NO LAUGHING timer has been set to ${prettyLength} minute${parseInt(length) == 1 ? "" : "s"}!`, message.message_id);
+                            return await this.sender.sendMessage(`The NO LAUGHING timer has been set to ${prettyLength}!`, message.message_id);
                         } else {
                             minutes = parseInt(length);
                         }

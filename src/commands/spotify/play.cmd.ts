@@ -48,10 +48,14 @@ export default class SpotifyPlayCMD extends IBEEPCommand {
                 if (global.additional.spotifySettings[SpotifySettings.TRACKS_ENABLED]) {
                     if (global.additional.spotifySettings[SpotifySettings.ONLY_QUEUE]) {
                         await global.spotify.queue.add(track.uri);
-                        return this.sender.sendMessage(`'${global.contentFilter(track.name)}' by ${track.artists.map(a => global.contentFilter(a.name)).join(", ")}. Queued!`, message.message_id);
+                        let artists = track.artists.map(a => global.contentFilter(a.name));
+                        artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
+                        return this.sender.sendMessage(`'${global.contentFilter(track.name)}' by ${artists}. Queued!`, message.message_id);
                     } else {
                         await global.spotify.playback.play(track.uri);
-                        return this.sender.sendMessage(`Playing: '${global.contentFilter(track.name)}' by ${track.artists.map(a => global.contentFilter(a.name)).join(", ")}`, message.message_id);
+                        let artists = track.artists.map(a => global.contentFilter(a.name));
+                        artists = artists.slice(0, -1).join(', ') + (artists.length > 1 ? ' & ' : '') + artists.slice(-1)[0];
+                        return this.sender.sendMessage(`Playing: '${global.contentFilter(track.name)}' by ${artists}`, message.message_id);
                     }
                 }
                 return this.sender.sendMessage("Tracks are currently disabled.", message.message_id);
