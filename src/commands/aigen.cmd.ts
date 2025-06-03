@@ -21,6 +21,7 @@ import IBEEPCommand, { Message as ChatMessage } from "@src/lib/base/IBEEPCommand
 import { orHigher, conditionUtils, TwitchPermissions } from '@src/lib/misc.js';
 import { writeFileSync } from 'fs';
 import isPortReachable from 'is-port-reachable';
+import { prepareSQL } from '@src/lib/sqlite.js';
 
 declare const global: IBEEPGlobal;
 
@@ -62,26 +63,40 @@ const instances: {
 
 
 const tools = {
-    sendWhisper: {
+    queryChat: {
       type: "function",
       function: {
-        name: "sendWhisper",
-        description: "Sends a whisper to a user.", 
+        name: "queryChat",
+        description: "Query the chat SQLite DB for sent messages.",
         parameters: {
             type: "object",
             required: [
-                "username",
-                "message",
+                "query"
+            ],
+            properties: {
+                query: {
+                  type: 'string',
+                  description: 'The SQL query to search for in the chat messages. You can use the following fields: id, login, user_id, sent_at, message, replied_to. The table\'s name is "chat_messages". YOU MAY NOT UNDER ANY CIRCUMSTANCES RUN ANY QUERY THAT WOULD MODIFY THE DATABASE, SUCH AS INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, RENAME, or TRUNCATE. YOU MAY ONLY RUN SELECT QUERIES.',
+                }
+            },
+        }
+      }
+    },
+    getUserID: {
+      type: "function",
+      function: {
+        name: "getUserID",
+        description: "Get the user ID of a user by their username.",
+        parameters: {
+            type: "object",
+            required: [
+                "username"
             ],
             properties: {
                 username: {
                   type: 'string',
-                  description: 'The username of the user to send the whisper to.',
-                },
-                message: {
-                  type: 'string',
-                  description: 'The message to send to the user.',
-                },
+                  description: 'The username of the user to get the ID for. The username should be in the format "username" without the @ symbol.',
+                }
             },
         }
       }
@@ -194,22 +209,24 @@ export default class AIGenCMD extends IBEEPCommand {
           response = await this.ollama.chat({
             model: 'ibeep',
             messages: msgs,
-            // tools: allowTools ? [
-            //   tools.sendWhisper,
-            // ] : [],
+            tools: allowTools ? [
+              tools.queryChat,
+              tools.getUserID,
+            ] : [],
+            think: false
           });
 
           if ((response.message.tool_calls?.length ?? 0)>0) {
-            console.log("AI called tools:", response.message.tool_calls.map(tool => tool.function.name));
-            writeFileSync("response.json", JSON.stringify(response, null, 2));
+            global.logger(`AI requested to use tool(s):`, "info", "AIGenCMD");
+            response.message.tool_calls.map(tool => `  - ${tool.function.name}: ${tool.function.arguments ? JSON.stringify(tool.function.arguments) : "No arguments"}`).forEach(toolCall => global.logger(toolCall, "info", "AIGenCMD"));
           }
 
           const toolResponses = await this.parseTools(response);
           
           if (toolResponses.length>0) {
-            console.log("Tool responses:", toolResponses);
+            global.logger(`Tool response(s):`, "info", "AIGenCMD");
+            toolResponses.map(tool => `  - ${tool.name}: ${tool.response}`).forEach(toolResp => global.logger(toolResp, "info", "AIGenCMD"));
 
-            
             for (let toolResp of toolResponses) {
               msgs.push(response.message);
               if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push(response.message);
@@ -220,7 +237,7 @@ export default class AIGenCMD extends IBEEPCommand {
               if (instances[message.chatter_user_id]?.enabled) instances[message.chatter_user_id].history.push({ role: "tool", content: toolResp.response.toString()});
             }
             
-            global.logger(`Rerunning AI with the tool responses - ${toolResponses.map(tool => tool.name).join(", ")}`, "info", "AIGenCMD");
+            global.logger(`Rerunning AI with the tool responses from tool(s) - ${toolResponses.map(tool => tool.name).join(", ")}`, "info", "AIGenCMD");
           } else {
             done = true;
           }
@@ -248,8 +265,16 @@ export default class AIGenCMD extends IBEEPCommand {
 
     private async parseTools(response: ChatResponse) {
       return Promise.all([...(response?.message?.tool_calls ?? []).map(async tool => {
-        if (tool.function.name === "sendWhisper") {
-          return this.formatToolResponse(tool, await this.sendWhisper(tool.function.arguments.username, tool.function.arguments.message));
+        if (tool.function.name === "queryChat") {
+          return this.formatToolResponse(tool, await this.queryChat(tool.function.arguments.query).catch(err => {
+            global.logger(`Error querying chat DB: ${err}`, "error", "AIGenCMD");
+            return `Error: ${err}`;
+          }));
+        } else if (tool.function.name === "getUserID") {
+          return this.formatToolResponse(tool, await this.getUserID(tool.function.arguments.username).catch(err => {
+            global.logger(`Error getting user ID for ${tool.function.arguments.username}: ${err}`, "error", "AIGenCMD");
+            return `Error: ${err}`;
+          }));
         } else {
           return {
             name: tool.function.name,
@@ -266,11 +291,33 @@ export default class AIGenCMD extends IBEEPCommand {
       }
     }
 
-    private async sendWhisper(username: string, message: string) {
-      console.log(`Sending a Twitch whisper to ${username}: ${message}`)
-      const toUser = await global.sender.fetchUser(username);
-      if (!toUser) return "Err: User not found";
-      await global.sender.sendWhisper(toUser.id, message);
-      return true
+    private queryChat(query: string): Promise<any> {
+      return new Promise(async (resolve, reject) => {
+        await prepareSQL(async (db) => {
+          try {
+            const stmt = db.prepare(query);
+            const rows = stmt.all();
+            resolve(JSON.stringify(rows));
+          } catch (err) {
+            reject(err);
+          }
+        })
+      });
     }
+
+    private getUserID(username: string): Promise<any> {
+      return new Promise((resolve, reject) => {
+
+        global.sender.getUser(username).then(user => {
+          if (user) {
+            resolve(user.id);
+          } else {
+            reject(`User with username '${username}' not found`);
+          }
+        }).catch(err => {
+          reject(err);
+        });
+      });
+    }
+
 }

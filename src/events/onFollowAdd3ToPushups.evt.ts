@@ -72,7 +72,8 @@ export default class OFA3TP extends IBEEPEvent {
 
             return;
         } else {
-            await this.sender.sendChatAnnouncement(`Thank you @${data.event.user_name} for the follow! ${pushupsToAdd} pushup${pushupsToAdd as any == 1?"":"s"} have been added to the total count, resulting in ${global.additional.pushups} total pushup${global.additional.pushups == 1 ?"":"s"}!`, "orange");
+            const followerCount = (await this.broadcaster.getFollowers(true)).length
+            await this.sender.sendChatAnnouncement(`Thank you @${data.event.user_name} for the follow!  have been added to the total count, resulting in ${followerCount} followers! (${global.additional.pushups} pushup${global.additional.pushups == 1 ?"":"s"})`)
         }
 
     }

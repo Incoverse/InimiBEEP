@@ -39,6 +39,7 @@ import {
     asteriskCensorStrategy
 } from "obscenity"
 import Redis from "ioredis";
+import { closeSQL } from "./lib/sqlite.js";
 const matcher = new RegExpMatcher({
     ...englishDataset.build(),
     ...englishRecommendedTransformers,
@@ -274,6 +275,7 @@ const onExit = async (sig: number) => {
     console.log(chalk.red("Logging out..."));
     await broadcaster.cleanup();
     await sender.cleanup();
+    await closeSQL();
     console.log(chalk.red("Logged out!"));
 
 

@@ -70,8 +70,9 @@ export default class OLSAM extends IBEEPEvent {
 
                     global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
                 } else if (recap.type === "newfollowers") {
+                    const followers = (await this.broadcaster.getFollowers(true)).length
                     const listWithAnd = recap.data.map((x: any) => `@${x.name}`).join(", ").replace(/, ([^,]*)$/, ', and $1');
-                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} followed while you were offline! Resulting in a final pushup count of ${global.additional.pushups}. Welcome to the community ${listWithAnd}!`;
+                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} followed while you were offline! Resulting in a final follower count of ${followers} (${global.additional.pushups} pushup${global.additional.pushups == 1 ?"":"s"}). Welcome to the community ${listWithAnd}!`;
 
                     // if message is longer than 500 characters, split it into multiple messages on the space before the 500th character
                     let remainingMessage = message;
