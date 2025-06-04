@@ -139,9 +139,19 @@ export default class AIGenCMD extends IBEEPCommand {
     // public messageTrigger: RegExp = /^!aigen\s*(.*)/;
 
 
-    public setup(): Promise<boolean | null> {
+    private host: string;
+    public async setup(): Promise<boolean | null> {
+
+      this.host = process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434";
+
+      if (!this.host.startsWith("http://") && !this.host.startsWith("https://")) {
+        global.logger(`OLLAMA_HOST_LOCATION environment variable is not set correctly. It should start with http:// or https://`, "error", "AIGenCMD");
+        return false;
+      }
+
+
       this.ollama = new Ollama({
-        host: process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434",
+        host: this.host
       });
 
       return super.setup();
@@ -151,18 +161,43 @@ export default class AIGenCMD extends IBEEPCommand {
 
       if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.VIP))) {
 
-
+ 
         if (!(await conditionUtils.isLive())) {
           await this.sender.sendMessage("I can't run the AI when the stream is offline", message.message_id);
           return
         }
 
-        if (!(await isPortReachable(parseInt(new URL(process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434").port), { host: new URL(process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434").hostname }))) {
+        const isMainOnline = await isPortReachable(parseInt(new URL(process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434").port), { host: new URL(process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434").hostname });
+        const isBackupOnline = process.env.OLLAMA_BACKUP_HOST_LOCATION ? await isPortReachable(parseInt(new URL(process.env.OLLAMA_BACKUP_HOST_LOCATION).port), { host: new URL(process.env.OLLAMA_BACKUP_HOST_LOCATION).hostname }) : false;
+
+        if (!isMainOnline && !isBackupOnline) {
           await this.sender.sendMessage("It appears that the AI is currently offline. Please try again later.", message.message_id);
-          return
+        } else if (!isMainOnline && isBackupOnline) {
+          if (this.host != process.env.OLLAMA_BACKUP_HOST_LOCATION) {
+            global.logger(`Main OLLAMA host is offline, switching to backup host: ${process.env.OLLAMA_BACKUP_HOST_LOCATION}`, "info", "AIGenCMD");
+            this.host = process.env.OLLAMA_BACKUP_HOST_LOCATION;
+            this.ollama = new Ollama({
+              host: this.host
+            });
+          }
+        } else if (isMainOnline && !isBackupOnline) {
+          if (this.host != process.env.OLLAMA_HOST_LOCATION) {
+            global.logger(`Backup OLLAMA host is offline, switching to main host: ${process.env.OLLAMA_HOST_LOCATION}`, "info", "AIGenCMD");
+            this.host = process.env.OLLAMA_HOST_LOCATION;
+            this.ollama = new Ollama({
+              host: this.host
+            });
+          }
+        } else if (isMainOnline && isBackupOnline) {
+          if (this.host != process.env.OLLAMA_HOST_LOCATION) {
+            global.logger(`Both OLLAMA hosts are online, switching to main host: ${process.env.OLLAMA_HOST_LOCATION}`, "info", "AIGenCMD");
+            this.host = process.env.OLLAMA_HOST_LOCATION;
+            this.ollama = new Ollama({
+              host: this.host
+            });
+          }
         }
 
-   
         let prompt = getPrompt(message);
 
         if (!prompt) {
@@ -225,7 +260,15 @@ export default class AIGenCMD extends IBEEPCommand {
           
           if (toolResponses.length>0) {
             global.logger(`Tool response(s):`, "info", "AIGenCMD");
-            toolResponses.map(tool => `  - ${tool.name}: ${tool.response}`).forEach(toolResp => global.logger(toolResp, "info", "AIGenCMD"));
+            toolResponses.map(tool => {
+              if (typeof tool.response === "string" && tool.response.length > 500) {
+                const start = tool.response.slice(0, 250);
+                const end = tool.response.slice(-250);
+                return `  - ${tool.name}: ${start}...${end}`;
+              } else {
+                return `  - ${tool.name}: ${tool.response}`;
+              }
+            }).forEach(toolResp => global.logger(toolResp, "info", "AIGenCMD"));
 
             for (let toolResp of toolResponses) {
               msgs.push(response.message);
@@ -296,8 +339,20 @@ export default class AIGenCMD extends IBEEPCommand {
         await prepareSQL(async (db) => {
           try {
             const stmt = db.prepare(query);
-            const rows = stmt.all();
-            resolve(JSON.stringify(rows));
+
+            try {
+              const rows = stmt.all();
+              resolve(JSON.stringify(rows));
+            } catch (err) {
+              if (err.message.includes("This statement does not return data")) {
+                try {
+                  const result = stmt.run();
+                  resolve(`Query executed successfully, but no data returned. Rows affected: ${result.changes}`);
+                } catch (runErr) {
+                  reject(`Error running SQL: ${runErr.message}`);
+                }
+              }
+            }
           } catch (err) {
             reject(err);
           }

@@ -23,7 +23,7 @@ declare const global: IBEEPGlobal;
 
 
 export default class CustomTimerCMD extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!timer\s*(\w+)?\s*(\w+)?$/;
+    public messageTrigger: RegExp = /^!timer(?!check)\s*(\.\w+)?\s*(\w+)?$/;
 
     public async exec(message: Message): Promise<any> {
 

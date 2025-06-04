@@ -148,7 +148,7 @@ export const conditionUtils = {
         return streamUser;
       }
 
-      return global.additional.debug ?? global.additional.streaming ?? false;
+      return (global.additional.debug || global.additional.streaming) ?? false;
     }
   }
 
