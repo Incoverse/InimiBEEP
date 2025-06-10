@@ -248,7 +248,10 @@ export default class AIGenCMD extends IBEEPCommand {
               tools.queryChat,
               tools.getUserID,
             ] : [],
-            think: false
+            think: false,
+            options: {
+              num_ctx: 4096 * 20, // 20x4096 tokens = 81920 tokens
+            }
           });
 
           if ((response.message.tool_calls?.length ?? 0)>0) {
