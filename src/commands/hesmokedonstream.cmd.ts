@@ -16,6 +16,7 @@
  */
 
 import IBEEPCommand, { Message } from "@src/lib/base/IBEEPCommand.js";
+import { conditionUtils, orHigher, TwitchPermissions } from "@src/lib/misc.js";
 
 declare const global: IBEEPGlobal;
 
@@ -23,12 +24,14 @@ export default class HeSmokedOnStream extends IBEEPCommand {
     public messageTrigger: RegExp = /^!(hesmokedonstream|smoked)$/;
 
     public async exec(message: Message): Promise<any> {
-        global.additional.pushups += 100
-        const msg = `${this.broadcaster.SELF.display_name} took a smoke break! 100 pushups have been added to the count. Total pushups: ${global.additional.pushups}`;
-        try {
-            await this.sender.sendChatAnnouncement(msg, "orange");
-        } catch (error) {
-            await this.sender.sendMessage(msg, message.message_id);
+        if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {
+            global.additional.pushups += 100
+            const msg = `${this.broadcaster.SELF.display_name} took a smoke break! 100 pushups have been added to the count. Total pushups: ${global.additional.pushups}`;
+            try {
+                await this.sender.sendChatAnnouncement(msg, "orange");
+            } catch (error) {
+                await this.sender.sendMessage(msg, message.message_id);
+            }
         }
     }
 
