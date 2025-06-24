@@ -21,7 +21,7 @@ import { conditionUtils, orHigher, TwitchPermissions } from "@src/lib/misc.js";
 declare const global: IBEEPGlobal;
 
 export default class HeSmokedOnStream extends IBEEPCommand {
-    public messageTrigger: RegExp = /^!(hesmokedonstream|smoked)$/;
+    public messageTrigger: RegExp = /^!(hesmokedonstream|smoked|quit\?pfft)$/;
 
     public async exec(message: Message): Promise<any> {
         if (conditionUtils.meetsPermission(message, orHigher(TwitchPermissions.Helper))) {
