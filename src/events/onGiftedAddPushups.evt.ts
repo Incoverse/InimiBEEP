@@ -21,12 +21,12 @@ import Twitch from "@src/lib/third-party/twitch.js";
 
 declare const global: IBEEPGlobal;
 
-export default class OnSubAnnounceHaiku extends IBEEPEvent {
+export default class OnGiftedAddPushups extends IBEEPEvent {
     public eventTrigger: (params: { broadcaster: Partial<Twitch>; sender: Partial<Twitch>; }) => EventInfo = ({broadcaster, sender}) => ({
         type: "twitchEvent",
         event: {
             as: "broadcaster",
-            name: "channel.subscription.message",
+            name: "channel.subscription.gift",
             version: 1,
             condition: {
                 "broadcaster_user_id": broadcaster?.SELF?.id,
@@ -47,30 +47,46 @@ export default class OnSubAnnounceHaiku extends IBEEPEvent {
 
         if (!(await conditionUtils.isLive())) {
 
-            const exists = global.additional.missedRecap.find((x: any) => x.type === "subhaiku");
+            const exists = global.additional.missedRecap.find((x: any) => x.type === "gifted");
 
             if (exists) {
-                exists.data.push({
-                    id: data.event.user_id,
-                    login: data.event.user_login,
-                    name: data.event.user_name,
-                })
+                exists.data.push(
+                    data.event.is_anonymous
+                        ? {
+                            name: "anonymous",
+                            amount: data.event.total,
+                        }
+                        : {
+                            id: data.event.user_id,
+                            login: data.event.user_login,
+                            name: data.event.user_name,
+                            amount: data.event.total,
+                        }
+                )
                 return;
             } else {
                 global.additional.missedRecap.push({
-                    type: "subhaiku",
-                    data: [{
-                        id: data.event.user_id,
-                        login: data.event.user_login,
-                        name: data.event.user_name,
-                    }]
+                    type: "gifted",
+                    data: [
+                        data.event.is_anonymous
+                            ? {
+                                name: "anonymous",
+                                amount: data.event.total,
+                            }
+                            : {
+                                id: data.event.user_id,
+                                login: data.event.user_login,
+                                name: data.event.user_name,
+                                amount: data.event.total,
+                            }
+                    ]
                 })
             }
 
             return;
         }
-        global.additional.pushups += global.config.pushupIncrements.onSub;
-        await this.sender.sendChatAnnouncement(`Thank you @${data.event.user_name} for the (re-)subscription! You will receive a haiku by ${this.broadcaster.SELF.display_name} shortly! Pushup count is now at ${global.additional.pushups}.`, "orange");
+        global.additional.pushups += global.config.pushupIncrements.onSub * data.event.total;
+        await this.sender.sendChatAnnouncement(`Thank you ${data.event.is_anonymous ? "anonymous user" : `@${data.event.user_name}`} for the ${data.event.total} gifted subscription${data.event.total == 1 ? "" : "s"}! Pushup count is now at ${global.additional.pushups}.`, "orange");
     }
     
 }

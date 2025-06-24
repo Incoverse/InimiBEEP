@@ -6,6 +6,7 @@
         "customChallenge": 25,
         "swedishOnly": 10,
         "noLaughing": 10,
+        "stoneface": 10,
         "theTower": 1
     },
     "timerLengths": {
@@ -16,6 +17,7 @@
         "swedishOnly": 5,
         "noLaughing": 10,
         "BDLG": 20,
+        "stoneface": 15,
         "emoteOnly": 5
     },
 

@@ -51,7 +51,10 @@ export default class OLSAM extends IBEEPEvent {
             for (const recap of [...global.additional.missedRecap]) {
                 if (recap.type === "subhaiku") {
                     const listWithAnd = recap.data.map((x: any) => `@${x.name}`).join(", ").replace(/, ([^,]*)$/, ', and $1');
-                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} (re-)subscribed, and deserve a haiku! Thank you to ${listWithAnd} for the support!`;
+                    global.additional.pushups += global.config.pushupIncrements.onSub * recap.data.length;
+                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} (re-)subscribed, and deserve a haiku! Thank you to ${listWithAnd} for the support! Pushup count is now at ${global.additional.pushups}.`;
+
+
 
                     // if message is longer than 500 characters, split it into multiple messages on the space before the 500th character
                     let remainingMessage = message;
@@ -89,6 +92,25 @@ export default class OLSAM extends IBEEPEvent {
                         await this.sender.sendMessage(remainingMessage);
                     }
 
+                    global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
+                } else if (recap.type === "gifted") {
+                    // if x.name is "anonymous" then the message should not mention the user and should only say "x anonymous user(s)"
+                    const listWithAnd = recap.data.map((x: any) => x.name === "anonymous" ? "anonymous user" : `@${x.name}`).join(", ").replace(/, ([^,]*)$/, ', and $1');
+                    const totalGifted = recap.data.reduce((acc: number, x: any) => acc + (x.amount || 1), 0);
+                    global.additional.pushups += global.config.pushupIncrements.onSub * totalGifted;
+                    const message = `${recap.data.length} ${recap.data.length === 1 ? "person" : "people"} gifted a total of ${totalGifted} subscription${totalGifted === 1 ? "" : "s"} while you were offline! Thank you to ${listWithAnd} for the support! Pushup count is now at ${global.additional.pushups}.`;
+                    // if message is longer than 500 characters, split it into multiple messages on the space before the 500th character
+                    let remainingMessage = message;
+                    while (remainingMessage.length > 500) {
+                        const splitIndex = remainingMessage.slice(0, 500).lastIndexOf(" ");
+                        const partMessage = remainingMessage.slice(0, splitIndex);
+                        await this.sender.sendMessage(partMessage);
+                        remainingMessage = remainingMessage.slice(splitIndex + 1);
+                    }
+                    
+                    if (remainingMessage.length > 0) {
+                        await this.sender.sendMessage(remainingMessage);
+                    }
                     global.additional.missedRecap = global.additional.missedRecap.filter((x: any) => x !== recap);
                 }
             }
