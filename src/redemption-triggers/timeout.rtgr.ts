@@ -48,7 +48,12 @@ export default class TimeoutRTGR extends IBEEPRedemptionTrigger {
         }
         
         await this.broadcaster.timeoutUser(timeoutUser.id, global.config.timeoutDuration, `Timed out by reward redemption made by @${event.redeemer.display_name}. (${prettyMilliseconds(global.config.timeoutDuration * 1000, {compact: true, verbose: true})})`);
-        await this.sender.sendChatAnnouncement(`@${event.redeemer.display_name} has timed out @${timeoutUser.display_name} for ${prettyMilliseconds(global.config.timeoutDuration * 1000, {compact: true, verbose: true})}!`);
+        const message = `@${event.redeemer.display_name} has timed out @${timeoutUser.display_name} for ${prettyMilliseconds(global.config.timeoutDuration * 1000, {compact: true, verbose: true})}!`;
+        try {
+            await this.sender.sendChatAnnouncement(message, "orange");
+        } catch (error) {
+            await this.sender.sendMessage(message);
+        }
         return await this.fulfillRedemption(event);
     }
 }

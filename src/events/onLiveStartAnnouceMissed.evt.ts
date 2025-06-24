@@ -46,7 +46,12 @@ export default class OLSAM extends IBEEPEvent {
         const thereAreMissedRecaps = global.additional.missedRecap.length > 0;
 
         if (thereAreMissedRecaps) {
-            await this.sender.sendChatAnnouncement(`Hey ${this.broadcaster.SELF.display_name}, I have some missed recaps for you from when you were offline!`, "orange");
+            const message = `Hey ${this.broadcaster.SELF.display_name}, I have some missed recaps for you from when you were offline!`;
+            try {
+                await this.sender.sendChatAnnouncement(message, "orange");
+            } catch (error) {
+                await this.sender.sendMessage(message);
+            }
 
             for (const recap of [...global.additional.missedRecap]) {
                 if (recap.type === "subhaiku") {

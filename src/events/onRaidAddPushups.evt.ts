@@ -21,60 +21,30 @@ import Twitch from "@src/lib/third-party/twitch.js";
 
 declare const global: IBEEPGlobal;
 
-export default class OnSubAnnounceHaiku extends IBEEPEvent {
+export default class OnGiftedAddPushups extends IBEEPEvent {
     public eventTrigger: (params: { broadcaster: Partial<Twitch>; sender: Partial<Twitch>; }) => EventInfo = ({broadcaster, sender}) => ({
         type: "twitchEvent",
         event: {
             as: "broadcaster",
-            name: "channel.subscription.message",
+            name: "channel.raid",
             version: 1,
             condition: {
-                "broadcaster_user_id": broadcaster?.SELF?.id,
+                "to_broadcaster_user_id": broadcaster?.SELF?.id,
             }
         }
     })
 
-    public setup(): Promise<boolean | null> {
-
-        if (!global.additional.missedRecap) {
-            global.additional.missedRecap = [];
-        }
-
-        return super.setup()
-    }
-
     public async exec(data?: {event: any}): Promise<void> {
 
-        if (!(await conditionUtils.isLive())) {
 
-            const exists = global.additional.missedRecap.find((x: any) => x.type === "subhaiku");
 
-            if (exists) {
-                exists.data.push({
-                    id: data.event.user_id,
-                    login: data.event.user_login,
-                    name: data.event.user_name,
-                })
-                return;
-            } else {
-                global.additional.missedRecap.push({
-                    type: "subhaiku",
-                    data: [{
-                        id: data.event.user_id,
-                        login: data.event.user_login,
-                        name: data.event.user_name,
-                    }]
-                })
-            }
-
-            return;
-        }
-        global.additional.pushups += global.config.pushupIncrements.onSub;
-        const message = `Thank you @${data.event.user_name} for the (re-)subscription! You will receive a haiku by ${this.broadcaster.SELF.display_name} shortly! Pushup count is now at ${global.additional.pushups}.`;
+        global.additional.pushups += data.event.viewers;
+        const message = `Thank you ${data.event.from_broadcaster_user_name} for the ${data.event.viewers} viewer raid! Pushup count is now at ${global.additional.pushups}.`;
         try {
             await this.sender.sendChatAnnouncement(message, "orange");
         } catch (error) {
             await this.sender.sendMessage(message);
         }
     }
+    
 }

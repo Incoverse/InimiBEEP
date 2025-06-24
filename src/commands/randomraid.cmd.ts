@@ -233,8 +233,12 @@ export default class RandomRaidCMD extends IBEEPCommand {
                 .replace("[a/an]", chooseArticle(langMap[raidable.language]))
 
             if (!test) {
-                
-                await global.sender.sendChatAnnouncement(`${showPoints ? `(${raidable.points}p) ` : ""}${messageVariation} ${global.contentFilter(raidable.socials)??""}`);
+                const message = `${showPoints ? `(${raidable.points}p) ` : ""}${messageVariation} ${global.contentFilter(raidable.socials)??""}`;
+                try {
+                    await this.sender.sendChatAnnouncement(message, "orange");
+                } catch (error) {
+                    await this.sender.sendMessage(message);
+                }
                 
                 setTimeout(async () => {
                     await this.broadcaster.raid(raidable.user_id);

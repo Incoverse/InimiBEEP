@@ -73,7 +73,14 @@ export default class OFA3TP extends IBEEPEvent {
             return;
         } else {
             const followerCount = (await this.broadcaster.getFollowers(true)).length
-            await this.sender.sendChatAnnouncement(`Thank you @${data.event.user_name} for the follow!  have been added to the total count, resulting in ${followerCount} followers! (${global.additional.pushups} pushup${global.additional.pushups == 1 ?"":"s"})`)
+
+            const message = `Thank you @${data.event.user_name} for the follow! You are follower number ${followerCount}! Pushup count is now at ${global.additional.pushups}.`;
+
+            try {
+                await this.sender.sendChatAnnouncement(message, "orange");
+            } catch (error) {
+                await this.sender.sendMessage(message);
+            }
         }
 
     }

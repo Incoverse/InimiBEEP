@@ -41,9 +41,18 @@ export default class ShoutoutCMD extends IBEEPCommand {
             }
             
             const colors = ["purple", "blue"]
+
+            const msg = `Go check out ${user.display_name} at https://twitch.tv/${user.login}!`;
+            try {
+                await this.sender.sendChatAnnouncement(msg, colors[Math.floor(Math.random() * colors.length)] as "purple" | "blue");
+            } catch (error) {
+                await this.sender.sendMessage(msg, message.message_id);
+            }
             
-            await this.sender.sendChatAnnouncement(`Go check out ${user.display_name} at https://twitch.tv/${user.login}!`, colors[Math.floor(Math.random() * colors.length)] as "purple" | "blue");
-            await this.sender.shoutout(user.id);
+
+            try {
+                await this.sender.shoutout(user.id);
+            } catch (error) {}
         }
     }
 

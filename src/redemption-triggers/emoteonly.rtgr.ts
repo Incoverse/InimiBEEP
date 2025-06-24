@@ -34,7 +34,12 @@ export default class EmoteOnlyRTGR extends IBEEPRedemptionTrigger {
         }
     
         await this.sender.emoteOnly(true);
-        await this.sender.sendChatAnnouncement(`@${event.redeemer.display_name} has enabled emote-only chat! It will be active for ${prettyMilliseconds(global.config.emoteOnlyDuration * 1000, {compact: true, verbose: true})}!`);
+        let message = `@${event.redeemer.display_name} has enabled emote-only chat! It will be active for ${prettyMilliseconds(global.config.emoteOnlyDuration * 1000, {compact: true, verbose: true})}!`;
+        try {
+            await this.sender.sendChatAnnouncement(message, "orange");
+        } catch (error) {
+            await this.sender.sendMessage(message);
+        }
         setTimeout(async () => {
 
             const chatConfig = await this.sender.getChatSettings();
@@ -43,7 +48,12 @@ export default class EmoteOnlyRTGR extends IBEEPRedemptionTrigger {
                 await this.cancelRedemption(event);
             } else {   
                 await this.sender.emoteOnly(false);
-                await this.sender.sendChatAnnouncement(`Emote-only chat has been disabled!`);
+                message = `Emote-only chat has been disabled! Thank you @${event.redeemer.display_name} for the redemption!`;
+                try {
+                    await this.sender.sendChatAnnouncement(message, "orange");
+                } catch (error) {
+                    await this.sender.sendMessage(message);
+                }
                 await this.fulfillRedemption(event);
             }
         }, global.config.emoteOnlyDuration * 1000);

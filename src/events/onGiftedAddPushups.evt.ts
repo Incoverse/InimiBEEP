@@ -86,7 +86,14 @@ export default class OnGiftedAddPushups extends IBEEPEvent {
             return;
         }
         global.additional.pushups += global.config.pushupIncrements.onSub * data.event.total;
-        await this.sender.sendChatAnnouncement(`Thank you ${data.event.is_anonymous ? "anonymous user" : `@${data.event.user_name}`} for the ${data.event.total} gifted subscription${data.event.total == 1 ? "" : "s"}! Pushup count is now at ${global.additional.pushups}.`, "orange");
+        const message = `Thank you ${data.event.is_anonymous ? "anonymous user" : `@${data.event.user_name}`} for the ${data.event.total} gifted subscription${data.event.total == 1 ? "" : "s"}! Pushup count is now at ${global.additional.pushups}.`;
+
+        try {
+            await this.sender.sendChatAnnouncement(message, "orange");
+        } catch (error) {
+            await this.sender.sendMessage(message);
+        }
+
     }
     
 }

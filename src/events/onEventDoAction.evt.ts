@@ -155,7 +155,11 @@ export default class OEDA extends IBEEPEvent {
                 } else if (event.do === "announcement") {
                     const msg = await parseVariables(event.message);
                     this.broadcaster.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
-                    this.broadcaster.sendChatAnnouncement(msg);
+                    try {
+                        this.broadcaster.sendChatAnnouncement(msg);
+                    } catch (e) {
+                        this.broadcaster.logger(`Failed to send chat announcement for event ${type}: ${e}`, "error");
+                    }
                 } else if (event.do === "eval") {
                     this.broadcaster.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${event.eval}`, "info");
                     eval(event.eval);
@@ -168,7 +172,11 @@ export default class OEDA extends IBEEPEvent {
                 } else if (event.do === "announcement") {
                     const msg = await parseVariables(event.message);
                     this.sender.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${msg}`, "info");
-                    this.sender.sendChatAnnouncement(msg);
+                    try {
+                        this.sender.sendChatAnnouncement(msg);
+                    } catch (e) {
+                        this.sender.logger(`Failed to send chat announcement for event ${type}: ${e}`, "error");
+                    }
                 } else if (event.do === "eval") {
                     this.sender.logger(`Event triggered: ${type} (${event.as}, ${event.do}) - ${event.eval}`, "info");
                     eval(event.eval);
