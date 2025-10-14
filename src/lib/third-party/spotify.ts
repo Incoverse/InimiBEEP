@@ -26,7 +26,7 @@ config();
 declare const global: IBEEPGlobal;
 
 const scopes = [
-    "streaming", 
+    "streaming",
     "playlist-read-private",
     "playlist-read-collaborative",
     "playlist-modify-private",
@@ -98,7 +98,7 @@ export default class SpotifyClient {
         this.credentials = {
             access_token: process.env.SPOTIFY_ACCESS_TOKEN,
             refresh_token: process.env.SPOTIFY_REFRESH_TOKEN,
-            expires_in: (parseInt(process.env._SPOTIFY_EXPIRES_AT) - Date.now()) || 0 
+            expires_in: (parseInt(process.env._SPOTIFY_EXPIRES_AT) - Date.now()) || 0
         }
 
 
@@ -288,25 +288,25 @@ export default class SpotifyClient {
     private async getTPAAInfo(url: string) {
 
         if (url.includes("/track/") || url.includes("spotify:track:")) {
-            
+
             const track = await this.getTrack(url);
             if (!track) throw new Error("Invalid URL");
-            
+
             return track;
         } else if (url.includes("/playlist/") || url.includes("spotify:playlist:")) {
             const playlist = await this.getPlaylist(url);
             if (!playlist) throw new Error("Invalid URL");
-            
+
             return playlist;
         } else if (url.includes("/album/") || url.includes("spotify:album:")) {
             const album = await this.getAlbum(url);
             if (!album) throw new Error("Invalid URL");
-            
+
             return album;
         } else if (url.includes("/artist/") || url.includes("spotify:artist:")) {
             const artist = await this.getArtist(url);
             if (!artist) throw new Error("Invalid URL");
-            
+
             return artist;
         } else {
             throw new Error("Invalid URL");
@@ -542,9 +542,9 @@ export default class SpotifyClient {
             const urlized = new URL(url);
             if (urlized.hostname !== "open.spotify.com") throw new Error("Invalid URL");
             if (!urlized.pathname.includes("/track/")) throw new Error("Invalid URL");
-            
+
             const path = urlized.pathname.split("/").filter(Boolean);
-            
+
             id = path[path.length-1];
         } else if (url.match(/^spotify:track:\S+$/)) {
             id = url.split(":")[2];
@@ -561,9 +561,9 @@ export default class SpotifyClient {
             const urlized = new URL(url);
             if (urlized.hostname !== "open.spotify.com") throw new Error("Invalid URL");
             if (!urlized.pathname.includes("/playlist/")) throw new Error("Invalid URL");
-            
+
             const path = urlized.pathname.split("/").filter(Boolean);
-            
+
             id = path[path.length-1];
         } else if (url.match(/^spotify:playlist:\S+$/)) {
             id = url.split(":")[2];
@@ -573,7 +573,7 @@ export default class SpotifyClient {
 
         return this.request.get(`/playlists/${id}?market=${this.user.country??"ES"}&fields=${fields}`).catch(() => null)
     }
-    
+
     private async getAlbum(url: string) {
         let id;
         if (url.startsWith("http")) {
@@ -581,9 +581,9 @@ export default class SpotifyClient {
             const urlized = new URL(url);
             if (urlized.hostname !== "open.spotify.com") throw new Error("Invalid URL");
             if (!urlized.pathname.includes("/album/")) throw new Error("Invalid URL");
-            
+
             const path = urlized.pathname.split("/").filter(Boolean);
-            
+
             id = path[path.length-1];
         } else if (url.match(/^spotify:album:\S+$/)) {
             id = url.split(":")[2];
@@ -601,9 +601,9 @@ export default class SpotifyClient {
             const urlized = new URL(url);
             if (urlized.hostname !== "open.spotify.com") throw new Error("Invalid URL");
             if (!urlized.pathname.includes("/artist/")) throw new Error("Invalid URL");
-            
+
             const path = urlized.pathname.split("/").filter(Boolean);
-            
+
             id = path[path.length-1];
         } else if (url.match(/^spotify:artist:\S+$/)) {
             id = url.split(":")[2];
@@ -613,7 +613,7 @@ export default class SpotifyClient {
 
         return this.request.get(`/artists/${id}`).catch(() => null)
     }
-    
+
 
     private async getActive(): Promise<Device> {
         const devices = await this.getAvailable();
