@@ -35,7 +35,7 @@ export default class OWCMCL extends IBEEPEvent {
     })
 
     public async setup(): Promise<boolean | null> {
-        
+        return null;
         await global.redis.sub.subscribe("action:ibeep:complete-mclink")
         global.redis.sub.on("message", async (channel, message) => {
             if (channel === "action:ibeep:complete-mclink") {

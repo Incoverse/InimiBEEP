@@ -29,6 +29,8 @@ export default class PraiseCMD extends IBEEPCommand {
 
 
     public setup(): Promise<boolean | null> {
+        return null
+        
         this.ollama = new Ollama({
           host: process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434",
         });

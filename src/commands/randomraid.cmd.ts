@@ -38,7 +38,7 @@ export default class RandomRaidCMD extends IBEEPCommand {
     
             const us = (await this.sender.getStreamInfo(this.broadcaster.SELF.id, {all:false}))?.[0] ?? {}
             
-            const source = obj?.source?.toLowerCase() ?? "all" // all, list, random
+            const source = obj?.source?.toLowerCase() ?? (global.additional.gDriveReady || "all") // all, list, random
     
             const type = obj?.type?.toLowerCase() ?? "top" 
             const test = obj?.test ?? false

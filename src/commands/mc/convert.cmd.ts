@@ -27,6 +27,10 @@ export default class ConvertCMD extends IBEEPCommand {
     public messageTrigger: RegExp = /^!convert\s+(.+)$/;
 
     public async setup(): Promise<boolean | null> {
+
+        // disable the command
+        return null
+
         global.additional.activeConversionRedemptions = [];
 
 

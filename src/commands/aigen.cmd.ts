@@ -141,7 +141,7 @@ export default class AIGenCMD extends IBEEPCommand {
 
     private host: string;
     public async setup(): Promise<boolean | null> {
-
+      return null
       this.host = process.env.OLLAMA_HOST_LOCATION || "http://127.0.0.1:11434";
 
       if (!this.host.startsWith("http://") && !this.host.startsWith("https://")) {

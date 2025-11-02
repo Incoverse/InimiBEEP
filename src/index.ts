@@ -18,7 +18,7 @@
 import { fileURLToPath } from "url";
 import Twitch from "./lib/third-party/twitch.js";
 import path from "path";
-import fs from "fs";
+import fs, { existsSync, readFileSync, writeFileSync } from "fs";
 import IBEEPCommand from "./lib/base/IBEEPCommand.js";
 import IBEEPEvent from "./lib/base/IBEEPEvent.js";
 
@@ -48,6 +48,7 @@ const matcher = new RegExpMatcher({
 config();
 
 declare const global: IBEEPGlobal;
+global.contained = existsSync("/.dockerenv");
 
 //! Constants
 
@@ -86,11 +87,25 @@ global.InimiID = "230887728"
 
 global.logger = logger;
 
+const CONFIG_PATH = global.contained ? "/ibeepdata/config.json" : "config.json";
+
+if (!fs.existsSync(CONFIG_PATH)) {
+  if (!existsSync("./config.template.json")) {
+    console.error("No config.json found! Please create one based on the config.example.json");
+    process.exit(1);
+  } else {
+    global.logger("Config file not found. Creating one from the template...", "warn");
+    const templateConfig = readFileSync("./config.template.json", { encoding: "utf-8" });
+    writeFileSync(CONFIG_PATH, templateConfig, { encoding: "utf-8" });
+  }
+}
+
 try {
-    global.config = JSON.parse(fs.readFileSync("config.json", "utf-8") ?? "{}")
+    global.config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8") ?? "{}")
 } catch (e) {
     console.error("Failed to parse config.json, please make sure it's valid JSON");
     console.log(e);
+    process.exit(1);
 }
 
 const __filename = fileURLToPath(import.meta.url);

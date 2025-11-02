@@ -6,6 +6,8 @@ interface IBEEPGlobal extends NodeJS.Global {
     events: import("@src/lib/base/IBEEPEvent.js").default[];
     redemptionTriggers: import("@src/lib/base/IBEEPRedemptionTrigger.js").default[];
     
+    contained: boolean;
+
     redis: {
         pub: import("ioredis").Redis;
         sub: import("ioredis").Redis;

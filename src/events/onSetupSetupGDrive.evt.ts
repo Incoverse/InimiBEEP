@@ -21,6 +21,8 @@ import { JWT } from "google-auth-library";
 
 declare const global: IBEEPGlobal;
 
+const GSERVICE_PATH = global.contained ? "/ibeepdata/gservice.json" : "gservice.json";
+
 export default class OSSGD extends IBEEPEvent {
 
     public eventTrigger: (params: TakesBroadcasterSender) => EventInfo = ({broadcaster, sender}) => ({
@@ -31,7 +33,14 @@ export default class OSSGD extends IBEEPEvent {
 
     public async setup(): Promise<boolean> {
         global.logger("Initiating GDrive...", "info")
-        const gCreds = JSON.parse(readFileSync(process.env.GSERVICE_FILE, "utf8"))
+
+        let gCreds: { client_email: any; private_key: any; };
+        try {
+            gCreds = JSON.parse(readFileSync(GSERVICE_PATH, "utf8"))
+        } catch (e) {
+            global.logger("Failed to read Google Service Account credentials. Please ensure gservice.json is present and valid.", "error", "GDrive-Setup")
+            return false
+        }
 
         const gScopes = [
             'https://www.googleapis.com/auth/spreadsheets',

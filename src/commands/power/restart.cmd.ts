@@ -31,8 +31,11 @@ export default class RestartCMD extends IBEEPCommand {
             if (isSystemd) {
                 await this.sender.sendMessage("Restarting...", message.message_id);
                 runTerminalCommand('sudo systemctl restart InimiBEEP')
+            } else if (global.contained) {
+                await this.sender.sendMessage("Restarting...", message.message_id);
+                process.exit(0);
             } else {
-                await this.sender.sendMessage("InimiBEEP was not started as a service please manually perform this action.", message.message_id);
+                await this.sender.sendMessage("InimiBEEP was not started as a service or as a container. Please manually perform this action.", message.message_id);
             }
         }
 

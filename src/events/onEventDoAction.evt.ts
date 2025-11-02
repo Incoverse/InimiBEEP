@@ -30,8 +30,10 @@ let events: {
     eval?: string
 }[] = [];
 
+const EVENTS_PATH = global.contained ? "/ibeepdata/events.json" : "events.json";
+
 try {
-    events = JSON.parse(readFileSync("events.json", "utf-8") ?? "[]")
+    events = JSON.parse(readFileSync(EVENTS_PATH, "utf-8") ?? "[]")
 } catch (e) {
     console.warn("Failed to parse events.json, resetting events");
     events = [];
@@ -65,11 +67,11 @@ export default class OEDA extends IBEEPEvent {
     public setup(): Promise<boolean | null> {
         let watcherReady = false;
 
-        this.eventsFileWatcher = chokidar.watch("events.json")
+        this.eventsFileWatcher = chokidar.watch(EVENTS_PATH)
             .on("change", () => {
                 if (!watcherReady) return;
                 try {
-                    events = JSON.parse(readFileSync("events.json", "utf-8") ?? "[]")
+                    events = JSON.parse(readFileSync(EVENTS_PATH, "utf-8") ?? "[]")
                 } catch (e) {
                     console.warn("Failed to parse events.json, resetting events");
                     events = [];
@@ -82,7 +84,7 @@ export default class OEDA extends IBEEPEvent {
             .on("add", () => {
                 if (!watcherReady) return;
                 try {
-                    events = JSON.parse(readFileSync("events.json", "utf-8") ?? "[]")
+                    events = JSON.parse(readFileSync(EVENTS_PATH, "utf-8") ?? "[]")
                 } catch (e) {
                     console.warn("Failed to parse events.json, resetting events");
                     events = [];

@@ -1,0 +1,12 @@
+name: InimiBEEP
+services:
+  inimibeep:
+    image: ghcr.io/incoverse/inimibeep:latest
+    container_name: InimiBEEP
+    restart: on-failure
+    volumes:
+      - data:/ibeepdata:rw
+    env_file: .env
+    build: .
+volumes:
+  data:

@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
 import bsql3 from "better-sqlite3";
+import { existsSync } from "fs";
 
 export const keepOpen: boolean = true;
-export const dbPath: string = "inimibeep.db";
+export let dbPath: string = (global.contained ?? existsSync("/ibeepdata")) ? "/ibeepdata/inimibeep.db" : "inimibeep.db";
 let database: bsql3.Database = keepOpen ? new bsql3(dbPath) : null;
 if (database) {
     database.pragma('journal_mode = WAL');
