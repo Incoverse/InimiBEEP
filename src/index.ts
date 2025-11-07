@@ -38,7 +38,6 @@ import {
     keepEndCensorStrategy,
     asteriskCensorStrategy
 } from "obscenity"
-import Redis from "ioredis";
 import { closeSQL } from "./lib/sqlite.js";
 const matcher = new RegExpMatcher({
     ...englishDataset.build(),
@@ -61,11 +60,6 @@ global.helpers = [
 global.commands = [];
 global.events = [];
 global.redemptionTriggers = [];
-
-global.redis = {
-    pub: new Redis.default(process.env.REDIS_URI),
-    sub: new Redis.default(process.env.REDIS_URI),
-}
 
 
 const censor = new TextCensor();
