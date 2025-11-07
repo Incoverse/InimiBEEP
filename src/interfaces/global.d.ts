@@ -8,11 +8,6 @@ interface IBEEPGlobal extends NodeJS.Global {
     
     contained: boolean;
 
-    redis: {
-        pub: import("ioredis").Redis;
-        sub: import("ioredis").Redis;
-    };
-
     config: IBEEPConfig;
     
     timers: {
